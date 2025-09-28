@@ -1,0 +1,24 @@
+{
+  "name": "farm-management-system",
+  "version": "1.0.0",
+  "description": "Full-stack farm management system with React frontend and Node.js backend",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd egg-farm && npm run dev",
+    "dev:backend": "cd farm-backend && npm run dev",
+    "install:all": "npm install && cd egg-farm && npm install && cd ../farm-backend && npm install",
+    "build": "cd egg-farm && npm run build",
+    "start": "cd farm-backend && npm start",
+    "setup": "npm run install:all && cd farm-backend && npm run setup",
+    "db:init": "cd farm-backend && npm run db:init",
+    "db:seed": "cd farm-backend && npm run db:seed",
+    "db:status": "cd farm-backend && npm run db:status"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "tailwindcss": "^4.1.13"
+  }
+}
