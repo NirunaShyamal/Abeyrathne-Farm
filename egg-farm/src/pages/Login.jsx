@@ -216,23 +216,6 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-xl p-4 backdrop-blur-sm">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-300 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-200 mb-2">Demo Credentials</h3>
-                <div className="text-sm text-green-100 space-y-1">
-                  <p><span className="font-medium">Username:</span> <code className="bg-green-500/30 px-2 py-1 rounded text-green-100">admin</code></p>
-                  <p><span className="font-medium">Password:</span> <code className="bg-green-500/30 px-2 py-1 rounded text-green-100">admin123</code></p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
