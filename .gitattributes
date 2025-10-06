@@ -1,0 +1,26 @@
+# Enforce normalized line endings for text files
+* text=auto
+
+# Always use LF in the repository for source files
+*.js eol=lf
+*.jsx eol=lf
+*.ts eol=lf
+*.tsx eol=lf
+*.css eol=lf
+*.scss eol=lf
+*.html eol=lf
+*.md text eol=lf
+*.json eol=lf
+*.yml eol=lf
+*.yaml eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.exe binary
+node_modules/** binary
