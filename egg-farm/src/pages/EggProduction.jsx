@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import apiService from '../services/api';
+import weatherService from '../services/weatherService';
+import { MetricCard, Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { MetricCardSkeleton, TableSkeleton, InlineLoading } from '../components/ui/Loading';
 
 const EggProduction = () => {
   const [records, setRecords] = useState([]);
@@ -14,12 +18,383 @@ const EggProduction = () => {
   });
   const [selectedBatch, setSelectedBatch] = useState('all');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  
+  // Advanced Features State
+  const [aiPredictions, setAiPredictions] = useState({
+    qualityScore: 0,
+    productionForecast: [],
+    recommendations: [],
+    riskFactors: []
+  });
+  const [weatherData, setWeatherData] = useState({
+    temperature: 0,
+    humidity: 0,
+    pressure: 0,
+    impact: 'positive',
+    description: '',
+    windSpeed: 0,
+    visibility: 0,
+    lastUpdated: '',
+    source: 'fallback'
+  });
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [productionEfficiency, setProductionEfficiency] = useState({
+    score: 0,
+    trends: [],
+    optimizations: []
+  });
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
 
   // Load data from backend
   useEffect(() => {
     fetchRecords();
     fetchSummary();
   }, []);
+
+  // Reload advanced features when records change
+  useEffect(() => {
+    loadAdvancedFeatures();
+  }, [records]);
+
+  // Load advanced features data
+  const loadAdvancedFeatures = async () => {
+    try {
+      // If no records, generate sample data for demonstration
+      if (records.length === 0) {
+        console.log('No records available, generating sample data for AI analysis');
+        generateSampleData();
+        return;
+      }
+
+      // Calculate AI predictions based on actual data
+      const qualityScore = calculateQualityScore();
+      const productionForecast = generateProductionForecast();
+      const recommendations = generateRecommendations();
+      const riskFactors = identifyRiskFactors();
+      
+      setAiPredictions({
+        qualityScore,
+        productionForecast,
+        recommendations,
+        riskFactors
+      });
+
+      // Get real weather data
+      setWeatherLoading(true);
+      const weather = await fetchWeatherData();
+      setWeatherData(weather);
+      setWeatherLoading(false);
+
+      // Calculate production efficiency
+      const efficiency = calculateProductionEfficiency();
+      setProductionEfficiency(efficiency);
+
+      console.log('Advanced features loaded:', {
+        qualityScore,
+        forecastLength: productionForecast.length,
+        recommendationsCount: recommendations.length,
+        riskFactorsCount: riskFactors.length
+      });
+    } catch (error) {
+      console.error('Error loading advanced features:', error);
+    }
+  };
+
+  // Generate sample data for demonstration
+  const generateSampleData = () => {
+    // Generate sample AI predictions
+    const sampleQualityScore = 85;
+    const sampleForecast = [];
+    
+    for (let i = 1; i <= 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      sampleForecast.push({
+        date: date.toISOString().split('T')[0],
+        predicted: 120 + Math.floor(Math.random() * 40),
+        confidence: Math.max(60, 100 - (i * 5))
+      });
+    }
+
+    setAiPredictions({
+      qualityScore: sampleQualityScore,
+      productionForecast: sampleForecast,
+      recommendations: [
+        {
+          type: 'success',
+          title: 'Good Production Rate',
+          description: 'Your current production rate is within optimal range',
+          priority: 'low'
+        },
+        {
+          type: 'info',
+          title: 'Feed Optimization',
+          description: 'Consider adjusting protein content for better egg quality',
+          priority: 'medium'
+        }
+      ],
+      riskFactors: []
+    });
+
+    // Generate sample weather data
+    setWeatherData({
+      temperature: 24 + Math.random() * 8,
+      humidity: 65 + Math.random() * 15,
+      pressure: 1015 + Math.random() * 10,
+      impact: 'positive'
+    });
+
+    // Generate sample efficiency data
+    setProductionEfficiency({
+      score: 88,
+      trends: [
+        { week: 1, efficiency: 85 },
+        { week: 2, efficiency: 87 },
+        { week: 3, efficiency: 89 },
+        { week: 4, efficiency: 88 },
+        { week: 5, efficiency: 90 },
+        { week: 6, efficiency: 87 },
+        { week: 7, efficiency: 89 },
+        { week: 8, efficiency: 88 }
+      ],
+      optimizations: [
+        {
+          title: 'Lighting Optimization',
+          description: 'Adjust lighting schedule for 2% production increase',
+          impact: 'Medium',
+          effort: 'Low'
+        },
+        {
+          title: 'Feed Timing',
+          description: 'Optimize feeding times for better efficiency',
+          impact: 'High',
+          effort: 'Medium'
+        }
+      ]
+    });
+  };
+
+  // AI-powered quality score calculation
+  const calculateQualityScore = () => {
+    if (records.length === 0) return 0;
+    
+    const recentRecords = records.slice(-30); // Last 30 days
+    let totalDamagedRate = 0;
+    let validRecords = 0;
+    
+    recentRecords.forEach(record => {
+      const eggsCollected = Number(record.eggsCollected) || 0;
+      const damagedEggs = Number(record.damagedEggs) || 0;
+      
+      if (eggsCollected > 0) {
+        totalDamagedRate += (damagedEggs / eggsCollected);
+        validRecords++;
+      }
+    });
+    
+    if (validRecords === 0) return 0;
+    
+    const avgDamagedRate = totalDamagedRate / validRecords;
+    const qualityScore = Math.max(0, 100 - (avgDamagedRate * 100));
+    return Math.round(qualityScore);
+  };
+
+  // Generate production forecast
+  const generateProductionForecast = () => {
+    const forecast = [];
+    const last7Days = records.slice(-7);
+    
+    // Calculate average production from actual data
+    let totalProduction = 0;
+    let validDays = 0;
+    
+    last7Days.forEach(record => {
+      const eggsCollected = Number(record.eggsCollected) || 0;
+      if (eggsCollected > 0) {
+        totalProduction += eggsCollected;
+        validDays++;
+      }
+    });
+    
+    const avgProduction = validDays > 0 ? totalProduction / validDays : 0;
+    
+    for (let i = 1; i <= 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      
+      // Add some variation based on day of week and season
+      const dayOfWeek = date.getDay();
+      const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.9 : 1.0;
+      const seasonalFactor = getSeasonalFactor(date);
+      
+      forecast.push({
+        date: date.toISOString().split('T')[0],
+        predicted: Math.round(avgProduction * weekendFactor * seasonalFactor),
+        confidence: Math.max(60, 100 - (i * 5))
+      });
+    }
+    
+    return forecast;
+  };
+
+  // Get seasonal factor for production
+  const getSeasonalFactor = (date) => {
+    const month = date.getMonth();
+    // Spring and fall are typically better for egg production
+    if (month >= 2 && month <= 4) return 1.1; // Spring
+    if (month >= 8 && month <= 10) return 1.05; // Fall
+    if (month >= 5 && month <= 7) return 0.95; // Summer
+    return 0.9; // Winter
+  };
+
+  // Generate AI recommendations
+  const generateRecommendations = () => {
+    const recommendations = [];
+    const qualityScore = calculateQualityScore();
+    
+    if (qualityScore < 70) {
+      recommendations.push({
+        type: 'warning',
+        title: 'Egg Quality Improvement',
+        description: 'Consider adjusting feed quality and hen health monitoring',
+        priority: 'high'
+      });
+    }
+    
+    if (records.length > 0) {
+      const recentProduction = records.slice(-7).reduce((sum, record) => sum + (Number(record.eggsCollected) || 0), 0);
+      const previousProduction = records.slice(-14, -7).reduce((sum, record) => sum + (Number(record.eggsCollected) || 0), 0);
+      
+      if (previousProduction > 0 && recentProduction < previousProduction * 0.9) {
+        recommendations.push({
+          type: 'info',
+          title: 'Production Decline Detected',
+          description: 'Recent production has decreased. Check environmental factors and hen health.',
+          priority: 'medium'
+        });
+      }
+    }
+    
+    recommendations.push({
+      type: 'success',
+      title: 'Optimal Feeding Schedule',
+      description: 'Maintain current feeding schedule for best results',
+      priority: 'low'
+    });
+    
+    return recommendations;
+  };
+
+  // Identify risk factors
+  const identifyRiskFactors = () => {
+    const risks = [];
+    
+    if (records.length > 0) {
+      const recentDamaged = records.slice(-7).reduce((sum, record) => sum + (Number(record.damagedEggs) || 0), 0);
+      const recentTotal = records.slice(-7).reduce((sum, record) => sum + (Number(record.eggsCollected) || 0), 0);
+      
+      if (recentTotal > 0 && (recentDamaged / recentTotal) > 0.05) {
+        risks.push({
+          factor: 'High Damage Rate',
+          impact: 'High',
+          description: `Damage rate is ${((recentDamaged / recentTotal) * 100).toFixed(1)}%, exceeding 5% threshold`
+        });
+      }
+    }
+    
+    return risks;
+  };
+
+  // Fetch real weather data for Kuliyapitiya, Sri Lanka
+  const fetchWeatherData = async () => {
+    return await weatherService.getCurrentWeather();
+  };
+
+
+  // Refresh weather data
+  const refreshWeatherData = async () => {
+    setWeatherLoading(true);
+    try {
+      const weather = await fetchWeatherData();
+      setWeatherData(weather);
+    } catch (error) {
+      console.error('Error refreshing weather:', error);
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  // Calculate production efficiency
+  const calculateProductionEfficiency = () => {
+    if (records.length === 0) return { score: 0, trends: [], optimizations: [] };
+    
+    const recentRecords = records.slice(-30);
+    let totalProduction = 0;
+    let totalDamaged = 0;
+    let validRecords = 0;
+    
+    recentRecords.forEach(record => {
+      const eggsCollected = Number(record.eggsCollected) || 0;
+      const damagedEggs = Number(record.damagedEggs) || 0;
+      
+      if (eggsCollected > 0) {
+        totalProduction += eggsCollected;
+        totalDamaged += damagedEggs;
+        validRecords++;
+      }
+    });
+    
+    const efficiencyScore = validRecords > 0 && totalProduction > 0 
+      ? Math.max(0, 100 - (totalDamaged / totalProduction) * 100)
+      : 0;
+    
+    return {
+      score: Math.round(efficiencyScore),
+      trends: generateEfficiencyTrends(),
+      optimizations: generateOptimizations()
+    };
+  };
+
+  // Generate efficiency trends
+  const generateEfficiencyTrends = () => {
+    const trends = [];
+    const weeklyData = [];
+    
+    for (let i = 0; i < records.length; i += 7) {
+      const weekRecords = records.slice(i, i + 7);
+      if (weekRecords.length > 0) {
+        const weekProduction = weekRecords.reduce((sum, record) => sum + (Number(record.eggsCollected) || 0), 0);
+        const weekDamaged = weekRecords.reduce((sum, record) => sum + (Number(record.damagedEggs) || 0), 0);
+        weeklyData.push({
+          week: Math.floor(i / 7) + 1,
+          efficiency: weekProduction > 0 ? ((weekProduction - weekDamaged) / weekProduction) * 100 : 0
+        });
+      }
+    }
+    
+    return weeklyData.slice(-8); // Last 8 weeks
+  };
+
+  // Generate optimization suggestions
+  const generateOptimizations = () => {
+    const optimizations = [];
+    
+    optimizations.push({
+      title: 'Feed Optimization',
+      description: 'Consider adjusting protein content in feed by 2%',
+      impact: 'Medium',
+      effort: 'Low'
+    });
+    
+    optimizations.push({
+      title: 'Lighting Schedule',
+      description: 'Optimize lighting duration for better production',
+      impact: 'High',
+      effort: 'Medium'
+    });
+    
+    return optimizations;
+  };
 
   const fetchRecords = async () => {
     try {
@@ -340,87 +715,365 @@ const EggProduction = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-lg min-h-screen">
-          <div className="p-6">
-            <nav className="space-y-3">
-              <Link to="/egg-production" className="w-full text-left px-4 py-3 bg-orange-100 text-orange-700 rounded-lg font-semibold hover:bg-orange-200 transition-colors shadow-sm block">
-                Egg Production Management
-              </Link>
-              <Link to="/sales-order" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                Sales and Order Management
-              </Link>
-                          <Link to="/feed-inventory" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                            Feed & Inventory Management
-                          </Link>
-                          <Link to="/task-scheduling" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                            Task Scheduling
-                          </Link>
-                          <Link to="/financial-management" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                            Financial Management
-                          </Link>
-                          <Link to="/user-management" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                            User Management
-                          </Link>
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-8">
+    <div className="p-8">
           {/* Page Title */}
           <div className="mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 2L3 7v11a1 1 0 001 1h12a1 1 0 001-1V7l-7-5zM8 15V9h4v6H8z" clipRule="evenodd" />
-                </svg>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2L3 7v11a1 1 0 001 1h12a1 1 0 001-1V7l-7-5zM8 15V9h4v6H8z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900">EGG PRODUCTION MANAGEMENT</h1>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900">EGG PRODUCTION MANAGEMENT</h1>
+              
+              {/* Back Button */}
+              <Link 
+                to="/" 
+                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Main Menu
+              </Link>
             </div>
           </div>
 
           {/* Key Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Total EGGS Produced</h3>
-              <p className="text-3xl font-bold text-orange-500">
-                {summary.totalEggs.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Average Production Rate</h3>
-              <p className="text-3xl font-bold text-orange-500">
-                {summary.averageProduction}%
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Eggs SOLD</h3>
-              <p className="text-3xl font-bold text-orange-500">
-                {Math.round(summary.eggsSold).toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Eggs in Stock</h3>
-              <p className="text-3xl font-bold text-orange-500">
-                {Math.round(summary.eggsInStock).toLocaleString()}
-              </p>
-            </div>
+            <MetricCard
+              title="Total EGGS Produced"
+              value={summary.totalEggs.toLocaleString()}
+              color="orange"
+              icon={
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              }
+              trend={{ direction: 'up', label: 'Production tracking' }}
+            />
+            <MetricCard
+              title="Average Production Rate"
+              value={`${summary.averageProduction}%`}
+              color="blue"
+              icon={
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              }
+              trend={{ direction: 'neutral', label: 'Performance metric' }}
+            />
+            <MetricCard
+              title="Eggs SOLD"
+              value={Math.round(summary.eggsSold).toLocaleString()}
+              color="green"
+              icon={
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              }
+              trend={{ direction: 'up', label: 'Sales success' }}
+            />
+            <MetricCard
+              title="Eggs in Stock"
+              value={Math.round(summary.eggsInStock).toLocaleString()}
+              color="purple"
+              icon={
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              }
+              trend={{ direction: 'neutral', label: 'Available inventory' }}
+            />
           </div>
+
+          {/* Advanced Features Toggle */}
+          <div className="mb-8 flex gap-4 items-center">
+            <Button
+              onClick={() => setShowAdvancedFeatures(!showAdvancedFeatures)}
+              variant="primary"
+              size="lg"
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              }
+            >
+              {showAdvancedFeatures ? 'Hide' : 'Show'} AI Analytics & Insights
+            </Button>
+            
+            {showAdvancedFeatures && (
+              <Button
+                onClick={() => loadAdvancedFeatures()}
+                variant="success"
+                size="lg"
+                className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                }
+              >
+                Refresh AI Analysis
+              </Button>
+            )}
+          </div>
+
+          {/* Advanced Features Section */}
+          {showAdvancedFeatures && (
+            <div className="space-y-8 mb-8">
+              {/* AI Quality Score & Weather Impact */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* AI Quality Score */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6 shadow-lg border border-blue-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      AI Quality Score
+                    </h3>
+                    <div className="text-3xl font-bold text-blue-600">
+                      {aiPredictions.qualityScore}%
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-1000"
+                      style={{ width: `${aiPredictions.qualityScore}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Based on damage rates and production consistency over the last 30 days
+                  </p>
+                </div>
+
+                {/* Weather Impact */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-6 shadow-lg border border-green-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                      </svg>
+                      Weather Impact - Kuliyapitiya, Sri Lanka
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={refreshWeatherData}
+                        disabled={weatherLoading}
+                        className="p-2 bg-white/50 hover:bg-white/70 rounded-lg transition-colors disabled:opacity-50"
+                        title="Refresh weather data"
+                      >
+                        <svg className={`w-4 h-4 text-green-600 ${weatherLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
+                      <div className={`text-2xl font-bold ${weatherData.impact === 'positive' ? 'text-green-600' : weatherData.impact === 'negative' ? 'text-red-600' : 'text-gray-600'}`}>
+                        {weatherData.impact === 'positive' ? '☀️' : weatherData.impact === 'negative' ? '🌧️' : '🌤️'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-600 mb-2">
+                      {weatherLoading ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-2"></div>
+                          Loading weather data...
+                        </div>
+                      ) : (
+                        weatherData.description || 'Current conditions'
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {weatherLoading ? 'Updating...' : `Last updated: ${weatherData.lastUpdated ? new Date(weatherData.lastUpdated).toLocaleString() : 'Just now'}`}
+                      {weatherData.source && weatherData.source !== 'fallback' && (
+                        <span className="ml-2 text-green-600">• Live data</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{Math.round(weatherData.temperature)}°C</div>
+                      <div className="text-xs text-gray-600">Temperature</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{Math.round(weatherData.humidity)}%</div>
+                      <div className="text-xs text-gray-600">Humidity</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{Math.round(weatherData.pressure)} hPa</div>
+                      <div className="text-xs text-gray-600">Pressure</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{weatherData.windSpeed || 0} m/s</div>
+                      <div className="text-xs text-gray-600">Wind Speed</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-white/50 rounded-lg">
+                    <div className="text-sm font-medium text-gray-700 mb-1">Production Impact:</div>
+                    <div className={`text-sm font-medium ${
+                      weatherData.impact === 'positive' ? 'text-green-700' : 
+                      weatherData.impact === 'negative' ? 'text-red-700' : 
+                      'text-gray-700'
+                    }`}>
+                      {weatherData.impact === 'positive' ? '✅ Optimal conditions for egg production' :
+                       weatherData.impact === 'negative' ? '⚠️ Weather may affect production' :
+                       '➖ Normal weather conditions'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Production Forecast */}
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  7-Day Production Forecast
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+                  {aiPredictions.productionForecast.map((day, index) => (
+                    <div key={index} className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                      <div className="text-sm font-medium text-gray-600 mb-2">
+                        {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                      </div>
+                      <div className="text-2xl font-bold text-purple-600 mb-1">
+                        {day.predicted}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {day.confidence}% confidence
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI Recommendations */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recommendations */}
+                <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    AI Recommendations
+                  </h3>
+                  <div className="space-y-3">
+                    {aiPredictions.recommendations.map((rec, index) => (
+                      <div key={index} className={`p-3 rounded-lg border-l-4 ${
+                        rec.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+                        rec.type === 'info' ? 'bg-blue-50 border-blue-400' :
+                        'bg-green-50 border-green-400'
+                      }`}>
+                        <div className="flex items-start">
+                          <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
+                            rec.priority === 'high' ? 'bg-red-500' :
+                            rec.priority === 'medium' ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}></div>
+                          <div>
+                            <div className="font-medium text-gray-800">{rec.title}</div>
+                            <div className="text-sm text-gray-600">{rec.description}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Production Efficiency */}
+                <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Production Efficiency
+                  </h3>
+                  <div className="text-center mb-4">
+                    <div className="text-4xl font-bold text-indigo-600 mb-2">
+                      {productionEfficiency.score}%
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000"
+                        style={{ width: `${productionEfficiency.score}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {productionEfficiency.optimizations.map((opt, index) => (
+                      <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                        <div>
+                          <div className="font-medium text-sm text-gray-800">{opt.title}</div>
+                          <div className="text-xs text-gray-600">{opt.description}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-xs px-2 py-1 rounded ${
+                            opt.impact === 'High' ? 'bg-red-100 text-red-800' :
+                            opt.impact === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {opt.impact}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Risk Factors */}
+              {aiPredictions.riskFactors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6 shadow-lg">
+                  <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    Risk Factors Detected
+                  </h3>
+                  <div className="space-y-3">
+                    {aiPredictions.riskFactors.map((risk, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
+                        <div>
+                          <div className="font-medium text-red-800">{risk.factor}</div>
+                          <div className="text-sm text-red-600">{risk.description}</div>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          risk.impact === 'High' ? 'bg-red-100 text-red-800' :
+                          risk.impact === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {risk.impact}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons and Filter */}
           <div className="flex gap-4 mb-8 items-center">
-            <button 
+            <Button 
               onClick={handleCreate}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium flex items-center"
+              variant="primary"
+              size="lg"
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              }
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
               ADD NEW RECORD
-            </button>
+            </Button>
             
             {/* Batch Filter Dropdown */}
             <div className="flex items-center gap-2">
@@ -450,64 +1103,61 @@ const EggProduction = () => {
           </div>
 
           {/* Data Table */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      onClick={() => handleSort('date')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Date
-                        {getSortIcon('date')}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      onClick={() => handleSort('batchNumber')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Batch Number
-                        {getSortIcon('batchNumber')}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      onClick={() => handleSort('birds')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Number of Birds
-                        {getSortIcon('birds')}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      onClick={() => handleSort('usableEggs')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Usable Eggs
-                        {getSortIcon('usableEggs')}
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-orange-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {loading ? (
+          {loading ? (
+            <TableSkeleton rows={5} columns={5} />
+          ) : (
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                        Loading...
-                      </td>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('date')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Date
+                          {getSortIcon('date')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('batchNumber')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Batch Number
+                          {getSortIcon('batchNumber')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('birds')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Number of Birds
+                          {getSortIcon('birds')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('usableEggs')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Usable Eggs
+                          {getSortIcon('usableEggs')}
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ) : filteredRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                        {records.length === 0 ? "No records found" : `No records found for batch ${selectedBatch}`}
-                      </td>
-                    </tr>
-                  ) : (
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                          {records.length === 0 ? "No records found" : `No records found for batch ${selectedBatch}`}
+                        </td>
+                      </tr>
+                    ) : (
                     filteredRecords.map((record) => {
                       const usableEggs = (Number(record.eggsCollected) || 0) - (Number(record.damagedEggs) || 0);
                       return (
@@ -557,13 +1207,12 @@ const EggProduction = () => {
                         </tr>
                       );
                     })
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </main>
-      </div>
+          )}
 
       {/* Modal for Create/Edit */}
       {showModal && (
@@ -675,19 +1324,21 @@ const EggProduction = () => {
                   />
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md"
+                    variant="secondary"
+                    size="md"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-md"
+                    variant="primary"
+                    size="md"
                   >
                     {editingRecord ? 'Update' : 'Create'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -793,21 +1444,23 @@ const EggProduction = () => {
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-3 pt-4 border-t">
-                <button
+                <Button
                   onClick={() => {
                     setShowDetailsModal(false);
                     handleEdit(detailsRecord);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-md"
+                  variant="primary"
+                  size="md"
                 >
                   Edit Record
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setShowDetailsModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md"
+                  variant="secondary"
+                  size="md"
                 >
                   Close
-                </button>
+                </Button>
               </div>
             </div>
           </div>

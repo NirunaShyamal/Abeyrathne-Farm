@@ -50,6 +50,24 @@ const FeedInventory = () => {
     notes: ''
   });
 
+  // Advanced Feed Management Features State
+  const [feedOptimization, setFeedOptimization] = useState({
+    nutritionAnalysis: [],
+    costOptimization: [],
+    wasteReduction: [],
+    qualityMetrics: [],
+    supplierPerformance: [],
+    reorderAlerts: []
+  });
+  const [smartRecommendations, setSmartRecommendations] = useState({
+    feedingSchedule: [],
+    nutritionAdjustments: [],
+    costSavings: [],
+    qualityImprovements: [],
+    inventoryOptimization: []
+  });
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
+
   // Auto-generate date system state
   const [dateSuggestions, setDateSuggestions] = useState([]);
   const [showDateSuggestions, setShowDateSuggestions] = useState(false);
@@ -96,6 +114,369 @@ const FeedInventory = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDateSuggestions]);
+
+  // Load advanced feed management features
+  useEffect(() => {
+    loadAdvancedFeatures();
+  }, [feedStock, feedUsage]);
+
+  // Advanced Feed Management Functions
+  const loadAdvancedFeatures = async () => {
+    try {
+      const optimization = calculateFeedOptimization();
+      const recommendations = generateSmartRecommendations();
+      
+      setFeedOptimization(optimization);
+      setSmartRecommendations(recommendations);
+      
+      console.log('Advanced feed features loaded:', {
+        nutritionItems: optimization.nutritionAnalysis.length,
+        recommendations: recommendations.feedingSchedule.length
+      });
+    } catch (error) {
+      console.error('Error loading advanced features:', error);
+    }
+  };
+
+  // Feed Optimization Calculations
+  const calculateFeedOptimization = () => {
+    return {
+      nutritionAnalysis: generateNutritionAnalysis(),
+      costOptimization: generateCostOptimization(),
+      wasteReduction: generateWasteReduction(),
+      qualityMetrics: generateQualityMetrics(),
+      supplierPerformance: generateSupplierPerformance(),
+      reorderAlerts: generateReorderAlerts()
+    };
+  };
+
+  // Nutrition Analysis
+  const generateNutritionAnalysis = () => {
+    return [
+      {
+        feedType: 'Layer Feed',
+        protein: 16.5,
+        calcium: 3.8,
+        phosphorus: 0.6,
+        energy: 2850,
+        status: 'Optimal',
+        recommendation: 'Maintain current levels'
+      },
+      {
+        feedType: 'Starter Feed',
+        protein: 20.0,
+        calcium: 1.0,
+        phosphorus: 0.7,
+        energy: 3000,
+        status: 'Good',
+        recommendation: 'Consider calcium boost for bone development'
+      },
+      {
+        feedType: 'Grower Feed',
+        protein: 18.0,
+        calcium: 1.2,
+        phosphorus: 0.65,
+        energy: 2900,
+        status: 'Optimal',
+        recommendation: 'Perfect for growth phase'
+      }
+    ];
+  };
+
+  // Cost Optimization
+  const generateCostOptimization = () => {
+    return [
+      {
+        feedType: 'Layer Feed',
+        currentCost: 45,
+        optimizedCost: 42,
+        savings: 6.7,
+        method: 'Bulk purchasing with supplier A',
+        impact: 'High'
+      },
+      {
+        feedType: 'Starter Feed',
+        currentCost: 52,
+        optimizedCost: 48,
+        savings: 7.7,
+        method: 'Switch to local supplier B',
+        impact: 'Medium'
+      },
+      {
+        feedType: 'Grower Feed',
+        currentCost: 38,
+        optimizedCost: 35,
+        savings: 7.9,
+        method: 'Direct farm-to-farm partnership',
+        impact: 'High'
+      }
+    ];
+  };
+
+  // Waste Reduction
+  const generateWasteReduction = () => {
+    return [
+      {
+        area: 'Feeding Schedule',
+        currentWaste: 8.5,
+        potentialReduction: 3.2,
+        method: 'Implement timed feeding 3x daily',
+        savings: 'Rs. 2,400/month'
+      },
+      {
+        area: 'Storage Conditions',
+        currentWaste: 5.2,
+        potentialReduction: 2.1,
+        method: 'Improve humidity control in storage',
+        savings: 'Rs. 1,500/month'
+      },
+      {
+        area: 'Feeder Design',
+        currentWaste: 6.8,
+        potentialReduction: 4.2,
+        method: 'Upgrade to anti-waste feeders',
+        savings: 'Rs. 3,200/month'
+      }
+    ];
+  };
+
+  // Quality Metrics
+  const generateQualityMetrics = () => {
+    return [
+      {
+        metric: 'Feed Conversion Ratio',
+        current: 2.1,
+        target: 1.9,
+        status: 'Needs Improvement',
+        trend: '+0.1'
+      },
+      {
+        metric: 'Protein Efficiency',
+        current: 85,
+        target: 90,
+        status: 'Good',
+        trend: '+2%'
+      },
+      {
+        metric: 'Calcium Absorption',
+        current: 78,
+        target: 85,
+        status: 'Needs Attention',
+        trend: '-1%'
+      }
+    ];
+  };
+
+  // Supplier Performance
+  const generateSupplierPerformance = () => {
+    return [
+      {
+        supplier: 'Premium Feeds Ltd',
+        rating: 4.8,
+        deliveryTime: 2.1,
+        qualityScore: 92,
+        priceCompetitiveness: 85,
+        reliability: 96,
+        recommendation: 'Primary supplier'
+      },
+      {
+        supplier: 'Farm Direct Co',
+        rating: 4.2,
+        deliveryTime: 3.5,
+        qualityScore: 88,
+        priceCompetitiveness: 92,
+        reliability: 89,
+        recommendation: 'Backup supplier'
+      },
+      {
+        supplier: 'Local Feed Mill',
+        rating: 3.9,
+        deliveryTime: 1.2,
+        qualityScore: 82,
+        priceCompetitiveness: 95,
+        reliability: 91,
+        recommendation: 'Emergency supplier'
+      }
+    ];
+  };
+
+  // Reorder Alerts
+  const generateReorderAlerts = () => {
+    return [
+      {
+        feedType: 'Layer Feed',
+        currentStock: 45,
+        minimumThreshold: 50,
+        daysRemaining: 3,
+        urgency: 'High',
+        suggestedOrder: 200
+      },
+      {
+        feedType: 'Starter Feed',
+        currentStock: 78,
+        minimumThreshold: 60,
+        daysRemaining: 7,
+        urgency: 'Medium',
+        suggestedOrder: 150
+      },
+      {
+        feedType: 'Grower Feed',
+        currentStock: 95,
+        minimumThreshold: 80,
+        daysRemaining: 12,
+        urgency: 'Low',
+        suggestedOrder: 100
+      }
+    ];
+  };
+
+  // Smart Recommendations
+  const generateSmartRecommendations = () => {
+    return {
+      feedingSchedule: generateFeedingSchedule(),
+      nutritionAdjustments: generateNutritionAdjustments(),
+      costSavings: generateCostSavings(),
+      qualityImprovements: generateQualityImprovements(),
+      inventoryOptimization: generateInventoryOptimization()
+    };
+  };
+
+  const generateFeedingSchedule = () => {
+    return [
+      {
+        time: '6:00 AM',
+        feedType: 'Layer Feed',
+        quantity: '2.5kg',
+        birds: 100,
+        reason: 'Morning energy boost for egg production'
+      },
+      {
+        time: '12:00 PM',
+        feedType: 'Layer Feed',
+        quantity: '2.0kg',
+        birds: 100,
+        reason: 'Midday nutrition maintenance'
+      },
+      {
+        time: '6:00 PM',
+        feedType: 'Layer Feed',
+        quantity: '1.5kg',
+        birds: 100,
+        reason: 'Evening feed for overnight nutrition'
+      }
+    ];
+  };
+
+  const generateNutritionAdjustments = () => {
+    return [
+      {
+        adjustment: 'Increase Calcium',
+        current: 3.8,
+        recommended: 4.2,
+        reason: 'Improve eggshell quality',
+        impact: 'High'
+      },
+      {
+        adjustment: 'Add Omega-3',
+        current: 0,
+        recommended: 0.5,
+        reason: 'Enhance egg nutritional value',
+        impact: 'Medium'
+      },
+      {
+        adjustment: 'Reduce Protein',
+        current: 16.5,
+        recommended: 16.0,
+        reason: 'Cost optimization without quality loss',
+        impact: 'Low'
+      }
+    ];
+  };
+
+  const generateCostSavings = () => {
+    return [
+      {
+        strategy: 'Bulk Purchasing',
+        potentialSavings: 8500,
+        implementation: 'Order 3-month supply',
+        timeline: '1 week',
+        priority: 'High'
+      },
+      {
+        strategy: 'Supplier Negotiation',
+        potentialSavings: 4200,
+        implementation: 'Renegotiate contracts',
+        timeline: '2 weeks',
+        priority: 'Medium'
+      },
+      {
+        strategy: 'Local Sourcing',
+        potentialSavings: 3200,
+        implementation: 'Find local suppliers',
+        timeline: '1 month',
+        priority: 'Low'
+      }
+    ];
+  };
+
+  const generateQualityImprovements = () => {
+    return [
+      {
+        improvement: 'Feed Storage Upgrade',
+        current: 'Basic',
+        recommended: 'Climate-controlled',
+        cost: 15000,
+        benefit: 'Reduce waste by 15%',
+        roi: '8 months'
+      },
+      {
+        improvement: 'Feeder System',
+        current: 'Traditional',
+        recommended: 'Anti-waste design',
+        cost: 8000,
+        benefit: 'Reduce waste by 20%',
+        roi: '6 months'
+      },
+      {
+        improvement: 'Quality Testing',
+        current: 'Visual',
+        recommended: 'Lab testing',
+        cost: 5000,
+        benefit: 'Ensure optimal nutrition',
+        roi: '12 months'
+      }
+    ];
+  };
+
+  const generateInventoryOptimization = () => {
+    return [
+      {
+        feedType: 'Layer Feed',
+        optimalStock: 200,
+        currentStock: 45,
+        reorderPoint: 50,
+        orderQuantity: 200,
+        frequency: 'Weekly'
+      },
+      {
+        feedType: 'Starter Feed',
+        optimalStock: 150,
+        currentStock: 78,
+        reorderPoint: 60,
+        orderQuantity: 150,
+        frequency: 'Bi-weekly'
+      },
+      {
+        feedType: 'Grower Feed',
+        optimalStock: 120,
+        currentStock: 95,
+        reorderPoint: 80,
+        orderQuantity: 120,
+        frequency: 'Monthly'
+      }
+    ];
+  };
+
 
   // Manual refresh function - optimized
   const refreshData = async () => {
@@ -599,33 +980,7 @@ const FeedInventory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-lg min-h-screen">
-          <div className="p-6">
-            <nav className="space-y-3">
-              <Link to="/egg-production" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                Egg Production Management
-              </Link>
-              <Link to="/sales-order" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                Sales and Order Management
-              </Link>
-                          <Link to="/feed-inventory" className="w-full text-left px-4 py-3 bg-orange-100 text-orange-700 rounded-lg font-semibold hover:bg-orange-200 transition-colors shadow-sm block">
-                            Feed & Inventory Management
-                          </Link>
-                          <Link to="/task-scheduling" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                            Task Scheduling
-                          </Link>
-                          <Link to="/financial-management" className="w-full text-left px-4 py-3 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm block">
-                            Financial Management
-                          </Link>
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-8">
+    <div className="p-8">
           {/* Success Message */}
           {successMessage && (
             <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -647,6 +1002,17 @@ const FeedInventory = () => {
             </div>
                 <p className="text-gray-600">Smart feed inventory with usage tracking and analytics</p>
           </div>
+              
+              {/* Back Button */}
+              <Link 
+                to="/" 
+                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Main Menu
+              </Link>
 
               <div className="flex flex-wrap gap-3">
                 <button 
@@ -834,7 +1200,289 @@ const FeedInventory = () => {
                     )}
                   </div>
                 )}
+                
+                {/* Add New Stock Button */}
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={() => setShowStockModal(true)}
+                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add New Stock
+                  </button>
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* Advanced Feed Management Features */}
+          {activeTab === 'dashboard' && (
+            <div className="mt-8">
+              {/* Advanced Features Toggle */}
+              <div className="mb-6 flex gap-4 items-center">
+                <button
+                  onClick={() => setShowAdvancedFeatures(!showAdvancedFeatures)}
+                  className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  {showAdvancedFeatures ? 'Hide' : 'Show'} Smart Feed Management
+                </button>
+                
+                {showAdvancedFeatures && (
+                  <button
+                    onClick={() => loadAdvancedFeatures()}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-4 py-3 rounded-lg font-medium flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh Analysis
+                  </button>
+                )}
+              </div>
+
+              {/* Advanced Features Content */}
+              {showAdvancedFeatures && (
+                <div className="space-y-8">
+                  {/* Feed Optimization Overview */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Nutrition Analysis */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Nutrition Analysis
+                      </h3>
+                      <div className="space-y-3">
+                        {feedOptimization.nutritionAnalysis.map((item, index) => (
+                          <div key={index} className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-medium text-gray-800">{item.feedType}</div>
+                                <div className="text-sm text-gray-600">
+                                  Protein: {item.protein}% | Calcium: {item.calcium}%
+                                </div>
+                              </div>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                item.status === 'Optimal' ? 'bg-green-100 text-green-800' :
+                                item.status === 'Good' ? 'bg-blue-100 text-blue-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {item.status}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">{item.recommendation}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Cost Optimization */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        Cost Optimization
+                      </h3>
+                      <div className="space-y-3">
+                        {feedOptimization.costOptimization.map((item, index) => (
+                          <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium text-gray-800">{item.feedType}</div>
+                                <div className="text-sm text-gray-600">{item.method}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-green-600">{item.savings}%</div>
+                                <div className="text-xs text-gray-500">{item.impact}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quality Metrics */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Quality Metrics
+                      </h3>
+                      <div className="space-y-3">
+                        {feedOptimization.qualityMetrics.map((item, index) => (
+                          <div key={index} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium text-gray-800">{item.metric}</div>
+                                <div className="text-sm text-gray-600">
+                                  Current: {item.current} | Target: {item.target}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-purple-600">{item.trend}</div>
+                                <div className="text-xs text-gray-500">{item.status}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Smart Recommendations */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Feeding Schedule */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Smart Feeding Schedule
+                      </h3>
+                      <div className="space-y-3">
+                        {smartRecommendations.feedingSchedule.map((item, index) => (
+                          <div key={index} className="p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-bold text-orange-600">{item.time}</div>
+                                <div className="text-sm text-gray-600">{item.feedType} - {item.quantity}</div>
+                                <div className="text-xs text-gray-500">{item.reason}</div>
+                              </div>
+                              <div className="text-right text-sm text-gray-600">
+                                {item.birds} birds
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Reorder Alerts & Supplier Performance */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Reorder Alerts */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Reorder Alerts
+                      </h3>
+                      <div className="space-y-3">
+                        {feedOptimization.reorderAlerts.map((item, index) => (
+                          <div key={index} className={`p-3 rounded-lg ${
+                            item.urgency === 'High' ? 'bg-red-50 border border-red-200' :
+                            item.urgency === 'Medium' ? 'bg-yellow-50 border border-yellow-200' :
+                            'bg-green-50 border border-green-200'
+                          }`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium text-gray-800">{item.feedType}</div>
+                                <div className="text-sm text-gray-600">
+                                  Stock: {item.currentStock}kg | Threshold: {item.minimumThreshold}kg
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {item.daysRemaining} days remaining
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                  item.urgency === 'High' ? 'bg-red-100 text-red-800' :
+                                  item.urgency === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {item.urgency}
+                                </div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  Order: {item.suggestedOrder}kg
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Supplier Performance */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Supplier Performance
+                      </h3>
+                      <div className="space-y-3">
+                        {feedOptimization.supplierPerformance.map((item, index) => (
+                          <div key={index} className="p-3 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-800">{item.supplier}</div>
+                                <div className="text-sm text-gray-600">
+                                  Rating: {item.rating}/5 | Delivery: {item.deliveryTime} days
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Quality: {item.qualityScore}% | Price: {item.priceCompetitiveness}%
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium text-teal-600">{item.recommendation}</div>
+                                <div className="text-xs text-gray-500">Reliability: {item.reliability}%</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Budget Alerts */}
+                  {budgetTracking.budgetAlerts.length > 0 && (
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 shadow-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Budget Alerts & Recommendations
+                      </h3>
+                      <div className="space-y-3">
+                        {budgetTracking.budgetAlerts.map((alert, index) => (
+                          <div key={index} className={`p-4 rounded-lg border ${
+                            alert.priority === 'High' ? 'bg-red-50 border-red-200' :
+                            alert.priority === 'Medium' ? 'bg-yellow-50 border-yellow-200' :
+                            'bg-blue-50 border-blue-200'
+                          }`}>
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-800">{alert.type}</div>
+                                <div className="text-sm text-gray-600 mt-1">{alert.message}</div>
+                                <div className="text-xs text-gray-500 mt-2">
+                                  <strong>Action:</strong> {alert.action}
+                                </div>
+                              </div>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                alert.priority === 'High' ? 'bg-red-100 text-red-800' :
+                                alert.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                                {alert.priority}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -844,15 +1492,26 @@ const FeedInventory = () => {
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Current Stock Levels</h3>
-                  {loading && (
-                    <div className="flex items-center text-gray-500">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowStockModal(true)}
+                      className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      Updating...
-                    </div>
-                  )}
+                      Add New Stock
+                    </button>
+                    {loading && (
+                      <div className="flex items-center text-gray-500">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Updating...
+                      </div>
+                    )}
+                  </div>
                 </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -1029,15 +1688,13 @@ const FeedInventory = () => {
             </div>
           </div>
           )}
-        </main>
-      </div>
 
       {/* Stock Update Modal */}
       {showStockModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Update Monthly Feed Stock</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Feed Stock</h3>
               <form onSubmit={handleStockSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Feed Type</label>

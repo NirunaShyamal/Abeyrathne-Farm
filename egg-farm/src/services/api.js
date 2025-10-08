@@ -1,5 +1,5 @@
 // API service for connecting frontend to backend
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 class ApiService {
   // Generic HTTP methods
@@ -214,81 +214,6 @@ class ApiService {
 
   async getTaskSummary() {
     return this.get('/task-scheduling/summary');
-  }
-
-  // Egg Production API methods
-  async getEggProductionRecords() {
-    return this.get('/egg-production');
-  }
-
-  async getEggProductionRecord(id) {
-    return this.get(`/egg-production/${id}`);
-  }
-
-  async createEggProductionRecord(data) {
-    return this.post('/egg-production', data);
-  }
-
-  async updateEggProductionRecord(id, data) {
-    return this.put(`/egg-production/${id}`, data);
-  }
-
-  async deleteEggProductionRecord(id) {
-    return this.delete(`/egg-production/${id}`);
-  }
-
-  async getEggProductionSummary() {
-    return this.get('/egg-production/summary');
-  }
-
-  // Sales Orders API methods
-  async getSalesOrders() {
-    return this.get('/sales-orders');
-  }
-
-  async getSalesOrder(id) {
-    return this.get(`/sales-orders/${id}`);
-  }
-
-  async createSalesOrder(data) {
-    return this.post('/sales-orders', data);
-  }
-
-  async updateSalesOrder(id, data) {
-    return this.put(`/sales-orders/${id}`, data);
-  }
-
-  async deleteSalesOrder(id) {
-    return this.delete(`/sales-orders/${id}`);
-  }
-
-  async getSalesSummary() {
-    return this.get('/sales-orders/summary');
-  }
-
-  // Feed Inventory API methods
-  async getFeedInventory() {
-    return this.get('/feed-inventory');
-  }
-
-  async getFeedInventoryItem(id) {
-    return this.get(`/feed-inventory/${id}`);
-  }
-
-  async createFeedInventoryItem(data) {
-    return this.post('/feed-inventory', data);
-  }
-
-  async updateFeedInventoryItem(id, data) {
-    return this.put(`/feed-inventory/${id}`, data);
-  }
-
-  async deleteFeedInventoryItem(id) {
-    return this.delete(`/feed-inventory/${id}`);
-  }
-
-  async getFeedInventorySummary() {
-    return this.get('/feed-inventory/summary');
   }
 
   // Financial Records API methods

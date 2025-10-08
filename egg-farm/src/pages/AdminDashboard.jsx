@@ -162,6 +162,15 @@ const AdminDashboard = () => {
               <p className="text-gray-600">Farm Management System</p>
             </div>
             <div className="flex items-center space-x-4">
+              <Link 
+                to="/" 
+                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Main Menu
+              </Link>
               <span className="text-sm text-gray-600">Welcome, {user?.fullName}</span>
               <button
                 onClick={handleLogout}

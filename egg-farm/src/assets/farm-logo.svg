@@ -1,0 +1,85 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient circle -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chickenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FCD34D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle with gradient -->
+  <circle cx="40" cy="40" r="38" fill="url(#bgGradient)" stroke="#B45309" stroke-width="3"/>
+  
+  <!-- Inner shadow circle -->
+  <circle cx="40" cy="40" r="35" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.3"/>
+  
+  <!-- Detailed chicken body with gradient -->
+  <ellipse cx="40" cy="48" rx="14" ry="12" fill="url(#chickenGradient)"/>
+  
+  <!-- Chicken head with gradient -->
+  <circle cx="40" cy="28" r="10" fill="url(#chickenGradient)"/>
+  
+  <!-- Detailed red comb with multiple points -->
+  <path d="M32 20 L34 16 L36 18 L38 16 L40 18 L42 16 L44 18 L46 16 L48 20 L46 22 L44 20 L42 22 L40 20 L38 22 L36 20 L34 22 L32 20 Z" fill="#DC2626"/>
+  
+  <!-- Detailed beak with shading -->
+  <path d="M40 32 L36 34 L40 36 L44 34 Z" fill="#F59E0B"/>
+  <path d="M40 32 L38 34 L40 36 L42 34 Z" fill="#D97706"/>
+  
+  <!-- Detailed eyes with highlights -->
+  <circle cx="36" cy="26" r="2" fill="#1F2937"/>
+  <circle cx="44" cy="26" r="2" fill="#1F2937"/>
+  <circle cx="36.5" cy="25.5" r="0.5" fill="#FFFFFF"/>
+  <circle cx="44.5" cy="25.5" r="0.5" fill="#FFFFFF"/>
+  
+  <!-- Detailed wings with gradient and feathers -->
+  <ellipse cx="28" cy="42" rx="8" ry="10" fill="url(#wingGradient)" transform="rotate(-20 28 42)"/>
+  <ellipse cx="52" cy="42" rx="8" ry="10" fill="url(#wingGradient)" transform="rotate(20 52 42)"/>
+  
+  <!-- Wing feather details -->
+  <path d="M24 38 Q28 40 24 42 Q28 44 24 46" stroke="#D97706" stroke-width="1" fill="none"/>
+  <path d="M56 38 Q52 40 56 42 Q52 44 56 46" stroke="#D97706" stroke-width="1" fill="none"/>
+  
+  <!-- Detailed legs with joints -->
+  <rect x="36" y="58" width="3" height="8" fill="#F59E0B"/>
+  <rect x="41" y="58" width="3" height="8" fill="#F59E0B"/>
+  
+  <!-- Leg joints -->
+  <circle cx="37.5" cy="62" r="1.5" fill="#D97706"/>
+  <circle cx="42.5" cy="62" r="1.5" fill="#D97706"/>
+  
+  <!-- Detailed feet with claws -->
+  <path d="M35 66 L37 66 L36 68 L35 66 Z" fill="#F59E0B"/>
+  <path d="M37 66 L39 66 L38 68 L37 66 Z" fill="#F59E0B"/>
+  <path d="M39 66 L41 66 L40 68 L39 66 Z" fill="#F59E0B"/>
+  
+  <path d="M41 66 L43 66 L42 68 L41 66 Z" fill="#F59E0B"/>
+  <path d="M43 66 L45 66 L44 68 L43 66 Z" fill="#F59E0B"/>
+  <path d="M45 66 L47 66 L46 68 L45 66 Z" fill="#F59E0B"/>
+  
+  <!-- Detailed egg with gradient -->
+  <ellipse cx="58" cy="55" rx="5" ry="7" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+  <ellipse cx="58" cy="55" rx="3" ry="5" fill="#FEF3C7" opacity="0.7"/>
+  
+  <!-- Farm elements - wheat stalks -->
+  <path d="M15 25 Q17 20 19 25 Q17 30 15 25" stroke="#10B981" stroke-width="2" fill="none"/>
+  <path d="M18 25 Q20 20 22 25 Q20 30 18 25" stroke="#10B981" stroke-width="2" fill="none"/>
+  <path d="M21 25 Q23 20 25 25 Q23 30 21 25" stroke="#10B981" stroke-width="2" fill="none"/>
+  
+  <!-- Company initial with gradient -->
+  <text x="40" y="72" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1F2937">A</text>
+  
+  <!-- Decorative border elements -->
+  <circle cx="20" cy="20" r="2" fill="#F59E0B" opacity="0.6"/>
+  <circle cx="60" cy="20" r="2" fill="#F59E0B" opacity="0.6"/>
+  <circle cx="20" cy="60" r="2" fill="#F59E0B" opacity="0.6"/>
+  <circle cx="60" cy="60" r="2" fill="#F59E0B" opacity="0.6"/>
+</svg>

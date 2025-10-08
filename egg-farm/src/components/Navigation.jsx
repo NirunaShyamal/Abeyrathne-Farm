@@ -1,12 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../assets/logo-simple.svg';
+import logo from '../assets/farm-logo.svg';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
@@ -21,15 +23,45 @@ const Navigation = () => {
   };
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Generate search suggestions based on common farm terms
+    if (value.length > 1) {
+      const suggestions = [
+        'eggs', 'production', 'batch', 'sales', 'orders', 'customers',
+        'feed', 'inventory', 'tasks', 'scheduling', 'financial', 'records',
+        'chickens', 'hens', 'layers', 'poultry', 'farm', 'management'
+      ].filter(term => 
+        term.toLowerCase().includes(value.toLowerCase()) && 
+        term.toLowerCase() !== value.toLowerCase()
+      ).slice(0, 5);
+      
+      setSearchSuggestions(suggestions);
+      setShowSuggestions(true);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
   };
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true);
+    if (searchSuggestions.length > 0) {
+      setShowSuggestions(true);
+    }
   };
 
   const handleSearchBlur = () => {
     setIsSearchFocused(false);
+    // Delay hiding suggestions to allow clicking on them
+    setTimeout(() => setShowSuggestions(false), 200);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
+    navigate(`/search?q=${encodeURIComponent(suggestion)}`);
   };
 
   return (
@@ -40,8 +72,8 @@ const Navigation = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center group">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                  <img src={logo} alt="Abeyrathne Enterprises Logo" className="w-6 h-6" />
+                <div className="w-16 h-10 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                  <img src={logo} alt="Abeyrathne Enterprises Logo" className="w-14 h-8" />
                 </div>
                 <div className="ml-3 hidden sm:block">
                   <h1 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
@@ -85,6 +117,27 @@ const Navigation = () => {
                     </svg>
                   </button>
                 )}
+                
+                {/* Search Suggestions Dropdown */}
+                {showSuggestions && searchSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {searchSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          {suggestion}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </form>
           </div>
@@ -123,9 +176,7 @@ const Navigation = () => {
                 {/* User Info - Hidden on small screens */}
                 <div className="hidden sm:flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {user?.fullName?.charAt(0) || 'U'}
-                    </span>
+                    <img src={logo} alt="Farm Logo" className="w-6 h-4" />
                   </div>
                   <div className="text-sm">
                     <div className="font-medium text-gray-900">{user?.fullName || 'User'}</div>
@@ -216,6 +267,30 @@ const Navigation = () => {
                     </svg>
                   </button>
                 )}
+                
+                {/* Mobile Search Suggestions Dropdown */}
+                {showSuggestions && searchSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {searchSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          handleSuggestionClick(suggestion);
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          {suggestion}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </form>
             </div>
             
@@ -278,9 +353,7 @@ const Navigation = () => {
               <div className="p-4 border-t border-gray-100">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {user?.fullName?.charAt(0) || 'U'}
-                    </span>
+                    <img src={logo} alt="Farm Logo" className="w-8 h-5" />
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">{user?.fullName || 'User'}</div>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import logo from '../assets/logo-simple.svg';
+import logo from '../assets/farm-logo.svg';
 
 const Register = () => {
   const [formData, setFormData] = useState({

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import FullPageLayout from './components/FullPageLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import EggProduction from './pages/EggProduction';
@@ -40,52 +41,52 @@ function App() {
       } />
       <Route path="/egg-production" element={
         <ProtectedRoute>
-          <Layout><EggProduction /></Layout>
+          <FullPageLayout><EggProduction /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/sales-order" element={
         <ProtectedRoute>
-          <Layout><SalesOrder /></Layout>
+          <FullPageLayout><SalesOrder /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/feed-inventory" element={
         <ProtectedRoute>
-          <Layout><FeedInventory /></Layout>
+          <FullPageLayout><FeedInventory /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/task-scheduling" element={
         <ProtectedRoute>
-          <Layout><TaskScheduling /></Layout>
+          <FullPageLayout><TaskScheduling /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/financial-management" element={
         <ProtectedRoute>
-          <Layout><FinancialManagement /></Layout>
+          <FullPageLayout><FinancialManagement /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/about" element={
         <ProtectedRoute>
-          <Layout><About /></Layout>
+          <FullPageLayout><About /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/services" element={
         <ProtectedRoute>
-          <Layout><Services /></Layout>
+          <FullPageLayout><Services /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/contact" element={
         <ProtectedRoute>
-          <Layout><Contact /></Layout>
+          <FullPageLayout><Contact /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/user-management" element={
         <ProtectedRoute requireAdmin={true}>
-          <Layout><UserManagement /></Layout>
+          <FullPageLayout><UserManagement /></FullPageLayout>
         </ProtectedRoute>
       } />
       <Route path="/search" element={
         <ProtectedRoute>
-          <Layout><SearchResults /></Layout>
+          <FullPageLayout><SearchResults /></FullPageLayout>
         </ProtectedRoute>
       } />
     </Routes>
