@@ -3,9 +3,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import ConnectionTest from '../components/ConnectionTest';
-import { MetricCard, StatsCard } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { MetricCardSkeleton, CardSkeleton } from '../components/ui/Loading';
+import { Card, MetricCard, StatsCard } from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const Home = () => {
   const { user } = useAuth();
@@ -63,40 +62,45 @@ const Home = () => {
     try {
       setMetrics(prev => ({ ...prev, loading: true }));
       
-      // Fetch egg production summary
+      // Fetch farm metrics from admin management
+      const farmMetricsResponse = await fetch('http://localhost:5000/api/farm-metrics');
+      let farmMetrics = null;
+      
+      if (farmMetricsResponse.ok) {
+        const farmData = await farmMetricsResponse.json();
+        if (farmData.success) {
+          farmMetrics = farmData.data;
+        }
+      }
+      
+      // If no farm metrics found, use default values
+      if (!farmMetrics) {
+        farmMetrics = {
+          totalBirds: 100000,
+          mortalityRate: 2.5,
+          totalEggs: 0,
+          totalEmployees: 25
+        };
+      }
+      
+      // Fetch real-time egg production data
       const eggSummary = await apiService.getEggProductionSummary();
-      
-      // Fetch sales summary
-      const salesSummary = await apiService.getSalesSummary();
-      
-      // Fetch feed inventory summary
-      const feedSummary = await apiService.getFeedInventorySummary();
-
-      // Calculate metrics from the data
-      const totalBirds = eggSummary.data?.totalRecords > 0 ? 
-        eggSummary.data.totalRecords * 100 : 0; // Assuming 100 birds per record for demo
-      
-      const totalEggs = eggSummary.data?.totalEggs || 0;
-      const totalDamagedEggs = eggSummary.data?.totalDamagedEggs || 0;
-      const mortalityRate = totalBirds > 0 ? 
-        ((totalDamagedEggs / totalBirds) * 100).toFixed(1) : 0;
-      
-      const totalEmployees = 25; // Fixed for now, can be made dynamic later
+      const totalEggs = eggSummary.data?.totalEggs || farmMetrics.totalEggs;
 
       setMetrics({
-        totalBirds,
-        mortalityRate: parseFloat(mortalityRate),
-        totalEggs,
-        totalEmployees,
+        totalBirds: farmMetrics.totalBirds,
+        mortalityRate: farmMetrics.mortalityRate,
+        totalEggs: totalEggs,
+        totalEmployees: farmMetrics.totalEmployees,
         loading: false
       });
     } catch (error) {
       console.error('Error fetching metrics:', error);
       setMetrics({
-        totalBirds: 0,
-        mortalityRate: 0,
+        totalBirds: 100000,
+        mortalityRate: 2.5,
         totalEggs: 0,
-        totalEmployees: 0,
+        totalEmployees: 25,
         loading: false
       });
     }
@@ -138,6 +142,18 @@ const Home = () => {
       items: [
         { name: 'Task Scheduling', path: '/task-scheduling', icon: '📅' },
         { name: 'User Management', path: '/user-management', icon: '👥', adminOnly: true },
+        { name: 'Dashboard Management', path: '/admin/dashboard-management', icon: '⚙️', adminOnly: true },
+      ]
+    },
+    {
+      title: 'Reports',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      items: [
+        { name: 'Report Generation', path: '/reports', icon: '📊' },
       ]
     }
   ];
@@ -165,47 +181,93 @@ const Home = () => {
 
   return (
     <div className="p-6 lg:p-8">
-      {/* Welcome Section */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
-          <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4 mb-4 sm:mb-0">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4 mb-4 sm:mb-0">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
+                  {currentGreeting}
+                </h1>
+                <p className="text-lg sm:text-xl text-gray-600">
+                  Optimize your farm operations with real-time insights
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
-              {currentGreeting}
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600">
-              Optimize your farm operations with real-time insights
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Enhanced Key Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Enhanced Key Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {metrics.loading ? (
           <>
-            <MetricCardSkeleton />
-            <MetricCardSkeleton />
-            <MetricCardSkeleton />
-            <MetricCardSkeleton />
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-300 h-40 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="text-right">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-300 h-40 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="text-right">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-300 h-40 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="text-right">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-300 h-40 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="text-right">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
           </>
         ) : (
           <>
-            <MetricCard
-              title="Total Birds"
-              value={metrics.totalBirds.toLocaleString()}
-              color="orange"
-              icon={
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-500 mb-1">Total Birds</p>
+                  <div className="text-3xl font-bold text-orange-600">
+                    {metrics.totalBirds.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <svg className="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
-              }
-              trend={{ direction: 'up', label: 'Healthy flock' }}
-            />
+                <span>Healthy flock</span>
+              </div>
+            </div>
 
             <MetricCard
               title="Mortality Rate"
@@ -244,76 +306,76 @@ const Home = () => {
             />
           </>
         )}
-      </div>
+          </div>
 
-      {/* Connection Test - Admin Only */}
-      {user?.role === 'admin' && (
-        <div className="mb-8">
-          <ConnectionTest />
-        </div>
-      )}
+          {/* Connection Test - Admin Only */}
+          {user?.role === 'admin' && (
+            <div className="mb-8">
+              <ConnectionTest />
+            </div>
+          )}
 
-      {/* Enhanced Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Enhanced Location Section */}
+          {/* Enhanced Bottom Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Enhanced Location Section */}
         <Card>
-          <div className="flex items-center mb-6">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Our Location</h2>
-              <p className="text-gray-600">Visit our farm</p>
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <p className="text-gray-700 font-medium">No. 222, Glahitiyawa, Kuliyapitiya</p>
-            <p className="text-sm text-gray-500 mt-1">Sri Lanka</p>
-          </div>
-          
-          <div className="rounded-xl h-64 overflow-hidden shadow-lg border-2 border-gray-200">
-            <iframe
-              src="https://maps.google.com/maps?q=F24W%2B3C+ABEYARATHNA+FARM,+Galahitiyawa&t=k&z=18&output=embed"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Abeyarathna Farm Location"
-            ></iframe>
-          </div>
-          
-          <div className="mt-4 text-center">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Our Location</h2>
+                  <p className="text-gray-600">Visit our farm</p>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <p className="text-gray-700 font-medium">No. 222, Glahitiyawa, Kuliyapitiya</p>
+                <p className="text-sm text-gray-500 mt-1">Sri Lanka</p>
+              </div>
+              
+              <div className="rounded-xl h-64 overflow-hidden shadow-lg border-2 border-gray-200">
+                <iframe
+                  src="https://maps.google.com/maps?q=F24W%2B3C+ABEYARATHNA+FARM,+Galahitiyawa&t=k&z=18&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Abeyarathna Farm Location"
+                ></iframe>
+              </div>
+              
+              <div className="mt-4 text-center">
             <Button
               as="a"
-              href="https://maps.google.com/?q=F24W+3C+ABEYARATHNA+FARM,+Galahitiyawa&t=k"
-              target="_blank"
-              rel="noopener noreferrer"
+                  href="https://maps.google.com/?q=F24W+3C+ABEYARATHNA+FARM,+Galahitiyawa&t=k"
+                  target="_blank"
+                  rel="noopener noreferrer"
               variant="primary"
               icon={
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
               }
             >
-              Open in Google Maps
+                  Open in Google Maps
             </Button>
-          </div>
+              </div>
         </Card>
 
-        {/* Enhanced Stats Section with Charts */}
+            {/* Enhanced Stats Section with Charts */}
         <StatsCard
           title="Farm Statistics"
           subtitle="Real-time performance metrics"
           icon={
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
           }
           stats={[
             {
@@ -324,9 +386,9 @@ const Home = () => {
               bgColor: "from-orange-50 to-orange-100",
               iconBg: "bg-orange-500",
               icon: (
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
               ),
               progress: 85,
               progressColor: "bg-gradient-to-r from-orange-400 to-orange-600"
@@ -339,9 +401,9 @@ const Home = () => {
               bgColor: "from-green-50 to-green-100",
               iconBg: "bg-green-500",
               icon: (
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
               ),
               progress: 92,
               progressColor: "bg-gradient-to-r from-green-400 to-green-600"
@@ -354,16 +416,16 @@ const Home = () => {
               bgColor: "from-blue-50 to-blue-100",
               iconBg: "bg-blue-500",
               icon: (
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
               ),
               progress: 68,
               progressColor: "bg-gradient-to-r from-blue-400 to-blue-600"
             }
           ]}
         >
-          {/* Quick Actions */}
+                {/* Quick Actions */}
           <div className="grid grid-cols-2 gap-3 mt-6">
             <Button
               as={Link}
@@ -372,8 +434,8 @@ const Home = () => {
               className="w-full justify-center"
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
               }
             >
               Finances
@@ -385,8 +447,8 @@ const Home = () => {
               className="w-full justify-center"
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
               }
             >
               Sales
