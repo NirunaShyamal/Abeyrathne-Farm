@@ -69,7 +69,7 @@ const Home = () => {
       setMetrics(prev => ({ ...prev, loading: true }));
       
       // Fetch farm metrics from admin management
-      const farmMetricsResponse = await fetch('http://localhost:5000/api/farm-metrics');
+  const farmMetricsResponse = await fetch('/api/farm-metrics');
       let farmMetrics = null;
       
       if (farmMetricsResponse.ok) {

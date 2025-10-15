@@ -74,7 +74,7 @@ const FeedInventory = () => {
   const [dateConflicts, setDateConflicts] = useState([]);
 
   // API Base URL
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = '/api';
 
   // Load data on component mount - optimized for faster loading
   useEffect(() => {

@@ -23,7 +23,7 @@ const SimpleFeedManagement = () => {
     recordedBy: ''
   });
 
-  const API_BASE_URL = 'http://localhost:5000/api/simple-feed';
+  const API_BASE_URL = '/api/simple-feed';
 
   // Load data
   useEffect(() => {

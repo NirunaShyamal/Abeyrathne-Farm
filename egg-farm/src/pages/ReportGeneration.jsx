@@ -8,9 +8,8 @@ const ReportGeneration = () => {
   const [loading, setLoading] = useState(false);
   const [actualData, setActualData] = useState(null);
 
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = '/api';
 
-<<<<<<< HEAD
   // Load external script helper (for jsPDF)
   const loadScript = (src) => new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
@@ -27,8 +26,6 @@ const ReportGeneration = () => {
     document.body.appendChild(script);
   });
 
-=======
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
   // Determine which report to show based on referrer
   useEffect(() => {
     const referrer = location.state?.from || '';
@@ -47,7 +44,6 @@ const ReportGeneration = () => {
     }
   }, [location.state]);
 
-<<<<<<< HEAD
   // Hide other report types in UI when coming from a specific module
   const isLockedFromModule = Boolean(location.state?.from);
   const autoExport = Boolean(location.state?.autoExport);
@@ -66,8 +62,6 @@ const ReportGeneration = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedReport]);
 
-=======
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
   const reportTypes = [
     {
       id: 'egg-production',
@@ -106,15 +100,9 @@ const ReportGeneration = () => {
     }
   ];
 
-<<<<<<< HEAD
   const generateReport = async (suppressAlerts = false) => {
     if (!selectedReport) {
       if (!suppressAlerts) alert('Please select a report type first');
-=======
-  const generateReport = async () => {
-    if (!selectedReport) {
-      alert('Please select a report type first');
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
       return;
     }
     
@@ -146,7 +134,6 @@ const ReportGeneration = () => {
       setActualData(data);
       
       if (data.length === 0) {
-<<<<<<< HEAD
         if (!suppressAlerts) alert('No data found. Please check if data exists in the database.');
         setLoading(false);
         return null;
@@ -159,17 +146,6 @@ const ReportGeneration = () => {
       console.error('Error generating report:', error);
       if (!suppressAlerts) alert('Error generating report. Please check your backend connection.');
       return null;
-=======
-        alert('No data found. Please check if data exists in the database.');
-        return;
-      }
-      
-      const reportData = generateReportData(selectedReport, data);
-      setReportData(reportData);
-    } catch (error) {
-      console.error('Error generating report:', error);
-      alert('Error generating report. Please check your backend connection.');
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
     } finally {
       setLoading(false);
     }
@@ -339,7 +315,6 @@ const ReportGeneration = () => {
     }
   };
 
-<<<<<<< HEAD
   const exportReport = async (format) => {
     if (!reportData) return;
     
@@ -478,20 +453,6 @@ const ReportGeneration = () => {
         alert('Failed to generate PDF. Please try again.');
       }
       return;
-=======
-  const exportReport = (format) => {
-    if (!reportData) return;
-    
-    if (format === 'pdf') {
-      const pdfContent = generatePDFContent(reportData);
-      const blob = new Blob([pdfContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportData.summary.reportTitle}-${new Date().toISOString().split('T')[0]}.txt`;
-      link.click();
-      URL.revokeObjectURL(url);
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
     } else if (format === 'excel') {
       const csvContent = generateCSVContent(reportData);
       const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -503,47 +464,14 @@ const ReportGeneration = () => {
       URL.revokeObjectURL(url);
     }
   };
-
-<<<<<<< HEAD
   // Removed old text-based PDF generator
-=======
-  const generatePDFContent = (data) => {
-    let content = `${data.summary.reportTitle}\n`;
-    content += `Generated: ${new Date(data.generatedAt).toLocaleString()}\n`;
-    content += `\n=== SUMMARY ===\n`;
-    
-    Object.entries(data.summary).forEach(([key, value]) => {
-      if (key !== 'reportTitle') {
-        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-        content += `${label}: ${typeof value === 'number' ? value.toLocaleString() : value}\n`;
-      }
-    });
-    
-    content += `\n=== DETAILED DATA ===\n`;
-    if (data.actualData && data.actualData.length > 0) {
-      data.actualData.forEach((item, index) => {
-        content += `\nRecord ${index + 1}:\n`;
-        Object.entries(item).forEach(([key, value]) => {
-          if (key !== '_id' && key !== '__v') {
-            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-            content += `  ${label}: ${value}\n`;
-          }
-        });
-      });
-    }
-    
-    return content;
-  };
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
+
+  // Removed old text-based PDF generator
 
   const generateCSVContent = (data) => {
     if (!data.actualData || data.actualData.length === 0) return '';
     
-<<<<<<< HEAD
-          const headers = Object.keys(data.actualData[0]).filter(key => key !== '_id' && key !== '__v' && key !== 'notes');
-=======
-    const headers = Object.keys(data.actualData[0]).filter(key => key !== '_id' && key !== '__v');
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
+  const headers = Object.keys(data.actualData[0]).filter(key => key !== '_id' && key !== '__v' && key !== 'notes');
     let csv = headers.join(',') + '\n';
     
     data.actualData.forEach(item => {
@@ -677,11 +605,7 @@ const ReportGeneration = () => {
         )}
 
         {/* Show all report types if none selected */}
-<<<<<<< HEAD
-        {!selectedReport && !isLockedFromModule && (
-=======
-        {!selectedReport && (
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
+  {!selectedReport && !isLockedFromModule && (
           <div className="mb-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
               <div className="flex items-center">

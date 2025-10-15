@@ -1,0 +1,9 @@
+{
+  "name": "farm-vercel-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "serverless-http": "^3.2.0"
+  }
+}

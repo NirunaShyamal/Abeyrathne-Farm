@@ -43,7 +43,7 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
+  const response = await fetch('/api/users', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -60,7 +60,7 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users/stats', {
+  const response = await fetch('/api/users/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -80,7 +80,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
+  const response = await fetch('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

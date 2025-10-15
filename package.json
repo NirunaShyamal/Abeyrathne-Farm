@@ -21,6 +21,18 @@
     "tailwindcss": "^4.1.14"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.13"
+    "@tailwindcss/vite": "^4.1.13",
+    "axios": "^1.12.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.6"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

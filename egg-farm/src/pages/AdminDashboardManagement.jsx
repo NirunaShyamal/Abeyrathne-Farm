@@ -13,7 +13,7 @@ const AdminDashboardManagement = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = '/api';
 
   // Load current metrics on component mount
   useEffect(() => {
@@ -338,11 +338,3 @@ const AdminDashboardManagement = () => {
 
 export default AdminDashboardManagement;
 
-
-
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258

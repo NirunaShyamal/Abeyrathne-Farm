@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "npm ci && cd egg-farm && npm ci && npm run build && cd ..",
+  "outputDirectory": "egg-farm/dist",
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs20.x",
+      "memory": 512,
+      "maxDuration": 10,
+      "includeFiles": "farm-backend/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/egg-farm/dist/index.html" }
+  ]
+}
