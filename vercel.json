@@ -5,7 +5,7 @@
   "buildCommand": "npm ci && cd egg-farm && npm ci && npm run build && cd ..",
   "outputDirectory": "egg-farm/dist",
   "functions": {
-    "api/index.js": {
+    "api/**/*.js": {
       "runtime": "nodejs20.x",
       "memory": 512,
       "maxDuration": 10,
