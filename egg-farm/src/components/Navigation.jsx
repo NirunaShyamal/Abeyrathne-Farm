@@ -168,11 +168,19 @@ const Navigation = () => {
                 About
               </Link>
               {isAuthenticated && user?.role === 'admin' && (
+<<<<<<< HEAD
                 <Link
                   to="/admin/dashboard-management"
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     location.pathname === '/admin/dashboard-management'
                       ? 'bg-orange-100 text-orange-700'
+=======
+                <Link 
+                  to="/admin/dashboard-management" 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    location.pathname === '/admin/dashboard-management' 
+                      ? 'bg-orange-100 text-orange-700' 
+>>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
                       : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
                   }`}
                 >

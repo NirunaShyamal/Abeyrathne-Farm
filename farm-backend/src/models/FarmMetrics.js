@@ -46,6 +46,9 @@ module.exports = mongoose.model('FarmMetrics', farmMetricsSchema);
 
 
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 29f384aae82d1760c7f378f3db37cf8074b26258
