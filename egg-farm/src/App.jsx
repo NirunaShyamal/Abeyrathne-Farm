@@ -17,6 +17,8 @@ import UserManagement from './pages/UserManagement';
 import SearchResults from './pages/SearchResults';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboardManagement from './pages/AdminDashboardManagement';
+import ReportGeneration from './pages/ReportGeneration';
 
 function App() {
   return (
@@ -30,6 +32,11 @@ function App() {
       <Route path="/admin" element={
         <ProtectedRoute requireAdmin={true}>
           <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/dashboard-management" element={
+        <ProtectedRoute requireAdmin={true}>
+          <FullPageLayout><AdminDashboardManagement /></FullPageLayout>
         </ProtectedRoute>
       } />
       
@@ -87,6 +94,11 @@ function App() {
       <Route path="/search" element={
         <ProtectedRoute>
           <FullPageLayout><SearchResults /></FullPageLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <FullPageLayout><ReportGeneration /></FullPageLayout>
         </ProtectedRoute>
       } />
     </Routes>

@@ -39,7 +39,24 @@ const getFeedStock = async (req, res) => {
     console.log('📊 Found items:', items.length, 'Total count:', total);
 
     // Return items without expensive usage calculations for better performance
-    const enhancedItems = items.map(item => item.toObject());
+    const today = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const enhancedItems = items.map(item => {
+      const obj = item.toObject();
+      const expiry = obj.expiryDate ? new Date(obj.expiryDate) : null;
+      const daysUntilExpiry = expiry ? Math.max(0, Math.ceil((expiry - today) / msPerDay)) : 0;
+      // Rough days remaining based on a naive daily usage estimate derived from threshold
+      // If threshold represents ~30 days of buffer, estimate daily usage as threshold/30
+      const quantity = (obj.currentQuantity ?? obj.quantity ?? 0);
+      const threshold = obj.minimumThreshold ?? 0;
+      const estimatedDailyUsage = threshold > 0 ? Math.max(1, Math.round(threshold / 30)) : 0;
+      const daysRemaining = estimatedDailyUsage > 0 ? Math.floor(quantity / estimatedDailyUsage) : daysUntilExpiry;
+      return {
+        ...obj,
+        daysUntilExpiry,
+        daysRemaining
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -231,6 +248,13 @@ const getFeedStockDashboard = async (req, res) => {
       };
     });
 
+    // Compute overallDaysRemaining as average of days until expiry (fallback 0),
+    // or based on naive consumption estimate similar to above
+    const msDay = 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const daysUntilExpArr = activeStock.map(s => s.expiryDate ? Math.max(0, Math.ceil((new Date(s.expiryDate) - now) / msDay)) : 0);
+    const avgDaysExpiry = daysUntilExpArr.length > 0 ? Math.floor(daysUntilExpArr.reduce((a,b)=>a+b,0) / daysUntilExpArr.length) : 0;
+
     res.status(200).json({
       success: true,
       data: {
@@ -240,7 +264,8 @@ const getFeedStockDashboard = async (req, res) => {
           lowStockItems,
           criticalItems,
           expiringItems,
-          activeStockTypes: activeStock.length
+          activeStockTypes: activeStock.length,
+          overallDaysRemaining: avgDaysExpiry
         },
         inventoryByType,
         alerts: {

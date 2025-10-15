@@ -6,7 +6,11 @@ const {
   updateEggProductionRecord,
   deleteEggProductionRecord,
   getEggProductionSummary,
-  getProductionGuidance
+  getProductionGuidance,
+  getNextBatchNumber,
+  getAllBatchNumbers,
+  getBatchStatistics,
+  findDuplicateBatches
 } = require('../controllers/eggProductionController');
 
 const router = express.Router();
@@ -45,5 +49,25 @@ router.put('/:id', updateEggProductionRecord);
 // @desc    Delete egg production record
 // @access  Public
 router.delete('/:id', deleteEggProductionRecord);
+
+// @route   GET /api/egg-production/next-batch-number
+// @desc    Generate next batch number
+// @access  Public
+router.get('/batch/next-batch-number', getNextBatchNumber);
+
+// @route   GET /api/egg-production/batch-numbers
+// @desc    Get all batch numbers
+// @access  Public
+router.get('/batch/batch-numbers', getAllBatchNumbers);
+
+// @route   GET /api/egg-production/batch-statistics
+// @desc    Get batch statistics
+// @access  Public
+router.get('/batch/batch-statistics', getBatchStatistics);
+
+// @route   GET /api/egg-production/duplicate-batches
+// @desc    Find duplicate batches
+// @access  Public
+router.get('/batch/duplicate-batches', findDuplicateBatches);
 
 module.exports = router;

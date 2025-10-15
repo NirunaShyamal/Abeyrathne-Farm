@@ -1,14 +1,79 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import apiService from '../services/api';
 
 const TaskScheduling = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState({
+    totalTasks: 0,
+    pendingTasks: 0,
+    inProgressTasks: 0,
+    completedTasks: 0,
+    overdueTasks: 0,
+    todaysTasks: 0,
+    tasksByCategory: [],
+    tasksByPriority: [],
+    tasksByAssignee: []
+  });
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const reportRef = useRef(null);
+  
+  // Load external script helper
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      if (existing.readyState === 'complete') resolve();
+      return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.body.appendChild(script);
+  });
+  
+  const exportReportPdf = async () => {
+    try {
+      // Load libraries from CDN if needed
+      if (!window.html2canvas) {
+        await loadScript('https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js');
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        await loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      }
+      const element = reportRef.current;
+      if (!element) return;
+      const canvas = await window.html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = position - pageHeight;
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      pdf.save('task-report.pdf');
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
 
   // Load data from backend
   useEffect(() => {
     fetchTasks();
+    fetchTaskSummary();
   }, []);
 
   // Load advanced task analytics
@@ -450,6 +515,30 @@ const TaskScheduling = () => {
     }
   };
 
+  const fetchTaskSummary = async () => {
+    try {
+      setSummaryLoading(true);
+      const data = await apiService.getTaskSummary();
+      if (data.success) {
+        setSummary({
+          totalTasks: data.data.totalTasks || 0,
+          pendingTasks: data.data.pendingTasks || 0,
+          inProgressTasks: data.data.inProgressTasks || 0,
+          completedTasks: data.data.completedTasks || 0,
+          overdueTasks: data.data.overdueTasks || 0,
+          todaysTasks: data.data.todaysTasks || 0,
+          tasksByCategory: data.data.tasksByCategory || [],
+          tasksByPriority: data.data.tasksByPriority || [],
+          tasksByAssignee: data.data.tasksByAssignee || []
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching task summary:', error);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [formData, setFormData] = useState({
@@ -577,17 +666,126 @@ const TaskScheduling = () => {
               </div>
               
               {/* Back Button */}
-              <Link 
-                to="/" 
-                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Main Menu
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link 
+                  to="/" 
+                  className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Back to Main Menu
+                </Link>
+              </div>
             </div>
             <p className="text-gray-600">Manage your farm tasks, schedules, and team assignments efficiently</p>
+          </div>
+
+          {/* Task Reports */}
+          <div id="task-report" ref={reportRef} className="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6M3 3v18h18" />
+                </svg>
+                Task Reports
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchTaskSummary}
+                  disabled={summaryLoading}
+                  className="px-3 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 rounded-md disabled:opacity-50"
+                  title="Refresh report"
+                >
+                  {summaryLoading ? 'Refreshing…' : 'Refresh'}
+                </button>
+                <Link
+                  to="/reports"
+                  state={{ from: 'task-scheduling', autoExport: true }}
+                  className="px-3 py-2 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-md"
+                  title="Download report"
+                >
+                  Download Report
+                </Link>
+              </div>
+            </div>
+
+            {/* Top metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+              <div className="bg-orange-50 border-l-4 border-orange-500 rounded p-4">
+                <div className="text-xs text-gray-600">Total</div>
+                <div className="text-2xl font-bold text-orange-600">{summary.totalTasks}</div>
+              </div>
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded p-4">
+                <div className="text-xs text-gray-600">Pending</div>
+                <div className="text-2xl font-bold text-yellow-600">{summary.pendingTasks}</div>
+              </div>
+              <div className="bg-blue-50 border-l-4 border-blue-500 rounded p-4">
+                <div className="text-xs text-gray-600">In Progress</div>
+                <div className="text-2xl font-bold text-blue-600">{summary.inProgressTasks}</div>
+              </div>
+              <div className="bg-green-50 border-l-4 border-green-500 rounded p-4">
+                <div className="text-xs text-gray-600">Completed</div>
+                <div className="text-2xl font-bold text-green-600">{summary.completedTasks}</div>
+              </div>
+              <div className="bg-red-50 border-l-4 border-red-500 rounded p-4">
+                <div className="text-xs text-gray-600">Overdue</div>
+                <div className="text-2xl font-bold text-red-600">{summary.overdueTasks}</div>
+              </div>
+              <div className="bg-purple-50 border-l-4 border-purple-500 rounded p-4">
+                <div className="text-xs text-gray-600">Today</div>
+                <div className="text-2xl font-bold text-purple-600">{summary.todaysTasks}</div>
+              </div>
+            </div>
+
+            {/* Breakdowns */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-semibold text-gray-800 mb-3">By Category</div>
+                {summary.tasksByCategory.length === 0 ? (
+                  <div className="text-sm text-gray-500">No data</div>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {summary.tasksByCategory.map((c) => (
+                      <li key={c._id} className="flex justify-between">
+                        <span className="text-gray-700">{c._id || 'Uncategorized'}</span>
+                        <span className="font-medium">{c.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-semibold text-gray-800 mb-3">By Priority</div>
+                {summary.tasksByPriority.length === 0 ? (
+                  <div className="text-sm text-gray-500">No data</div>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {summary.tasksByPriority.map((p) => (
+                      <li key={p._id} className="flex justify-between">
+                        <span className="text-gray-700">{p._id || 'Unknown'}</span>
+                        <span className="font-medium">{p.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-semibold text-gray-800 mb-3">Top Assignees</div>
+                {summary.tasksByAssignee.length === 0 ? (
+                  <div className="text-sm text-gray-500">No data</div>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {summary.tasksByAssignee.map((a) => (
+                      <li key={a._id} className="flex justify-between">
+                        <span className="text-gray-700">{a._id || 'Unassigned'}</span>
+                        <span className="font-medium">{a.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Summary Cards */}

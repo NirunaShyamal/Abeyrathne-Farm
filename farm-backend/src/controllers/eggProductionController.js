@@ -1,4 +1,5 @@
 const EggProduction = require('../models/EggProduction');
+const BatchService = require('../services/batchService');
 
 // @desc    Get all egg production records
 // @route   GET /api/egg-production
@@ -7,8 +8,9 @@ const getEggProductionRecords = async (req, res) => {
   try {
     const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = req.query;
     
+    // Sort by date descending by default; convert date string YYYY-MM-DD to Date for stable sorting
     const records = await EggProduction.find()
-      .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+      .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1, createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -40,11 +42,27 @@ const createEggProductionRecord = async (req, res) => {
   try {
     const { date, batchNumber, birds, eggsCollected, damagedEggs, notes } = req.body;
 
+    // Generate batch number if not provided
+    let finalBatchNumber = batchNumber;
+    if (!finalBatchNumber) {
+      finalBatchNumber = await BatchService.generateNextBatchNumber();
+    }
+
     // Validate required fields
-    if (!date || !batchNumber || !birds || eggsCollected === undefined) {
+    if (!date || !finalBatchNumber || !birds || eggsCollected === undefined) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields: date, batchNumber, birds, eggsCollected'
+      });
+    }
+
+    // Check if batch number is unique for this date
+    const isUnique = await BatchService.isBatchNumberUnique(finalBatchNumber, date);
+    if (!isUnique) {
+      return res.status(400).json({
+        success: false,
+        message: 'A record with this batch number already exists for this date. Please use a different batch number or edit the existing record.',
+        error: 'DUPLICATE_BATCH_NUMBER'
       });
     }
 
@@ -89,7 +107,7 @@ const createEggProductionRecord = async (req, res) => {
     // Create new record
     const newRecord = new EggProduction({
       date,
-      batchNumber,
+      batchNumber: finalBatchNumber,
       birds,
       eggsCollected,
       damagedEggs: damagedEggs || 0,
@@ -111,11 +129,20 @@ const createEggProductionRecord = async (req, res) => {
   } catch (error) {
     console.error('Error creating egg production record:', error);
     
-    // Handle duplicate key error
+    // Handle duplicate key error (unique constraint violation)
     if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === 'batchNumber') {
+        return res.status(400).json({
+          success: false,
+          message: 'A record with this batch number already exists for this date. Please use a different batch number or edit the existing record.',
+          error: 'DUPLICATE_BATCH_NUMBER'
+        });
+      }
       return res.status(400).json({
         success: false,
-        message: 'A record with this batch number already exists for this date'
+        message: `A record with this ${field} already exists`,
+        error: 'DUPLICATE_RECORD'
       });
     }
 
@@ -209,7 +236,7 @@ const updateEggProductionRecord = async (req, res) => {
     const { date, batchNumber, birds, eggsCollected, damagedEggs, notes } = req.body;
 
     const record = await EggProduction.findById(req.params.id);
-    
+
     if (!record) {
       return res.status(404).json({
         success: false,
@@ -217,32 +244,41 @@ const updateEggProductionRecord = async (req, res) => {
       });
     }
 
+    // Prevent batch number changes for existing records to maintain data integrity
+    if (batchNumber !== undefined && batchNumber !== record.batchNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Batch number cannot be changed after record creation to maintain data consistency',
+        error: 'BATCH_NUMBER_IMMUTABLE'
+      });
+    }
+
     // Validate realistic values for updates
     const validationErrors = [];
     const finalBirds = birds !== undefined ? birds : record.birds;
     const finalEggsCollected = eggsCollected !== undefined ? eggsCollected : record.eggsCollected;
-    
+
     // Check birds count
     if (birds !== undefined && (birds <= 0 || birds > 100000)) {
       validationErrors.push('Number of birds should be between 1 and 100,000');
     }
-    
+
     // Check eggs collected
     if (eggsCollected !== undefined && (eggsCollected < 0 || eggsCollected > finalBirds * 1.2)) {
       validationErrors.push(`Eggs collected should be between 0 and ${Math.floor(finalBirds * 1.2)} (maximum 120% of birds)`);
     }
-    
+
     // Check production rate
     const productionRate = finalBirds > 0 ? (finalEggsCollected / finalBirds) * 100 : 0;
     if (productionRate > 120) {
       validationErrors.push(`Production rate of ${productionRate.toFixed(1)}% is unrealistic. Maximum should be 120%`);
     }
-    
+
     // Check damaged eggs
     if (damagedEggs !== undefined && (damagedEggs < 0 || damagedEggs > finalEggsCollected)) {
       validationErrors.push('Damaged eggs cannot be negative or exceed total eggs collected');
     }
-    
+
     if (validationErrors.length > 0) {
       return res.status(400).json({
         success: false,
@@ -257,9 +293,8 @@ const updateEggProductionRecord = async (req, res) => {
       });
     }
 
-    // Update fields
+    // Update fields (excluding batchNumber which is immutable)
     if (date !== undefined) record.date = date;
-    if (batchNumber !== undefined) record.batchNumber = batchNumber;
     if (birds !== undefined) record.birds = birds;
     if (eggsCollected !== undefined) record.eggsCollected = eggsCollected;
     if (damagedEggs !== undefined) record.damagedEggs = damagedEggs;
@@ -281,7 +316,7 @@ const updateEggProductionRecord = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating egg production record:', error);
-    
+
     // Handle validation errors
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(val => val.message);
@@ -420,6 +455,90 @@ const getProductionGuidance = async (req, res) => {
   }
 };
 
+// @desc    Generate next batch number
+// @route   GET /api/egg-production/next-batch-number
+// @access  Public
+const getNextBatchNumber = async (req, res) => {
+  try {
+    const nextBatchNumber = await BatchService.generateNextBatchNumber();
+    res.status(200).json({
+      success: true,
+      data: {
+        nextBatchNumber
+      }
+    });
+  } catch (error) {
+    console.error('Error generating next batch number:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate next batch number',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get all batch numbers
+// @route   GET /api/egg-production/batch-numbers
+// @access  Public
+const getAllBatchNumbers = async (req, res) => {
+  try {
+    const batchNumbers = await BatchService.getAllBatchNumbers();
+    res.status(200).json({
+      success: true,
+      data: {
+        batchNumbers
+      }
+    });
+  } catch (error) {
+    console.error('Error getting batch numbers:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get batch numbers',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get batch statistics
+// @route   GET /api/egg-production/batch-statistics
+// @access  Public
+const getBatchStatistics = async (req, res) => {
+  try {
+    const statistics = await BatchService.getBatchStatistics();
+    res.status(200).json({
+      success: true,
+      data: statistics
+    });
+  } catch (error) {
+    console.error('Error getting batch statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get batch statistics',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Find duplicate batches
+// @route   GET /api/egg-production/duplicate-batches
+// @access  Public
+const findDuplicateBatches = async (req, res) => {
+  try {
+    const duplicates = await BatchService.findDuplicateBatches();
+    res.status(200).json({
+      success: true,
+      data: duplicates
+    });
+  } catch (error) {
+    console.error('Error finding duplicate batches:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to find duplicate batches',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getEggProductionRecords,
   getEggProductionRecordById,
@@ -427,5 +546,9 @@ module.exports = {
   updateEggProductionRecord,
   deleteEggProductionRecord,
   getEggProductionSummary,
-  getProductionGuidance
+  getProductionGuidance,
+  getNextBatchNumber,
+  getAllBatchNumbers,
+  getBatchStatistics,
+  findDuplicateBatches
 };

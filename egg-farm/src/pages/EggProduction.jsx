@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import apiService from '../services/api';
 import weatherService from '../services/weatherService';
 import { MetricCard, Card } from '../components/ui/Card';
@@ -17,7 +17,8 @@ const EggProduction = () => {
     eggsInStock: 0
   });
   const [selectedBatch, setSelectedBatch] = useState('all');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  // Default to show newest records first
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
   
   // Advanced Features State
   const [aiPredictions, setAiPredictions] = useState({
@@ -520,24 +521,33 @@ const EggProduction = () => {
     setSelectedBatch(e.target.value);
   };
 
-  // Generate next batch number
-  const generateNextBatchNumber = () => {
-    if (records.length === 0) {
-      return 'Batch-001';
+  // Generate next batch number using backend API
+  const generateNextBatchNumber = async () => {
+    try {
+      const response = await apiService.get('/egg-production/batch/next-batch-number');
+      if (response.success) {
+        return response.data.nextBatchNumber;
+      }
+      throw new Error('Failed to generate batch number');
+    } catch (error) {
+      console.error('Error generating next batch number:', error);
+      // Fallback to local generation if API fails
+      if (records.length === 0) {
+        return 'Batch-001';
+      }
+
+      const batchNumbers = records
+        .map(record => record.batchNumber)
+        .filter(batch => batch && batch.startsWith('Batch-'))
+        .map(batch => {
+          const num = batch.split('-')[1];
+          return parseInt(num, 10) || 0;
+        });
+
+      const maxBatch = Math.max(...batchNumbers, 0);
+      const nextBatch = maxBatch + 1;
+      return `Batch-${nextBatch.toString().padStart(3, '0')}`;
     }
-    
-    // Extract batch numbers and find the highest
-    const batchNumbers = records
-      .map(record => record.batchNumber)
-      .filter(batch => batch && batch.startsWith('Batch-'))
-      .map(batch => {
-        const num = batch.split('-')[1];
-        return parseInt(num, 10) || 0;
-      });
-    
-    const maxBatch = Math.max(...batchNumbers, 0);
-    const nextBatch = maxBatch + 1;
-    return `Batch-${nextBatch.toString().padStart(3, '0')}`;
   };
 
   // Format date for input (YYYY-MM-DD format)
@@ -594,19 +604,86 @@ const EggProduction = () => {
   });
   const [guidance, setGuidance] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
+  const reportRef = useRef(null);
 
-  const handleCreate = () => {
+  // Load external script helper
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      if (existing.readyState === 'complete') resolve();
+      return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.body.appendChild(script);
+  });
+
+  const exportReportPdf = async () => {
+    try {
+      if (!window.html2canvas) {
+        await loadScript('https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js');
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        await loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      }
+      const element = reportRef.current;
+      if (!element) return;
+      const canvas = await window.html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = position - pageHeight;
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      pdf.save('egg-production-report.pdf');
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  const handleCreate = async () => {
     setEditingRecord(null);
     const today = new Date();
-    const nextBatch = generateNextBatchNumber();
-    setFormData({ 
-      date: formatDateForInput(today), 
-      batchNumber: nextBatch, 
-      birds: '', 
-      eggsCollected: '', 
-      damagedEggs: '' 
-    });
-    setShowModal(true);
+    try {
+      const nextBatch = await generateNextBatchNumber();
+      setFormData({
+        date: formatDateForInput(today),
+        batchNumber: nextBatch,
+        birds: '',
+        eggsCollected: '',
+        damagedEggs: ''
+      });
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error generating batch number:', error);
+      // Fallback to local generation
+      const fallbackBatch = records.length === 0 ? 'Batch-001' :
+        `Batch-${(Math.max(...records.map(r => parseInt(r.batchNumber?.split('-')[1] || '0')), 0) + 1).toString().padStart(3, '0')}`;
+
+      setFormData({
+        date: formatDateForInput(today),
+        batchNumber: fallbackBatch,
+        birds: '',
+        eggsCollected: '',
+        damagedEggs: ''
+      });
+      setShowModal(true);
+    }
   };
 
   const handleEdit = (record) => {
@@ -643,8 +720,13 @@ const EggProduction = () => {
     try {
       // Format the data for submission
       const submissionData = {
-        ...formData,
-        date: formatDateForDisplay(formData.date) // Convert back to DD/MM/YYYY for backend
+        // Ensure types expected by backend
+        date: formData.date, // keep as YYYY-MM-DD so it's sortable and consistent
+        batchNumber: (formData.batchNumber || '').trim(),
+        birds: formData.birds === '' ? undefined : Number(formData.birds),
+        eggsCollected: formData.eggsCollected === '' ? undefined : Number(formData.eggsCollected),
+        damagedEggs: formData.damagedEggs === '' ? 0 : Number(formData.damagedEggs),
+        notes: formData.notes
       };
 
       let data;
@@ -676,6 +758,13 @@ const EggProduction = () => {
         }
         if (data.guidance) {
           setGuidance({ suggestions: data.guidance });
+        }
+        // Handle specific error types
+        if (data.error === 'BATCH_NUMBER_IMMUTABLE') {
+          alert('Batch numbers cannot be changed after record creation. This helps maintain data consistency and prevents duplicate batch numbers.');
+        }
+        if (data.error === 'DUPLICATE_BATCH_NUMBER') {
+          alert('A record with this batch number already exists for this date. Please use a different batch number or edit the existing record.');
         }
       }
     } catch (error) {
@@ -728,19 +817,33 @@ const EggProduction = () => {
                 <h1 className="text-3xl font-bold text-gray-900">EGG PRODUCTION MANAGEMENT</h1>
               </div>
               
-              {/* Back Button */}
-              <Link 
-                to="/" 
-                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Main Menu
-              </Link>
+              {/* Back / Report Buttons */}
+              <div className="flex items-center gap-3">
+                <Link 
+                  to="/" 
+                  className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Back to Main Menu
+                </Link>
+                <Link 
+                  to="/reports"
+                  state={{ from: 'egg-production', autoExport: true }}
+                  className="inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors duration-200 font-medium"
+                  title="Download report"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6M3 3v18h18" />
+                  </svg>
+                  Download Report
+                </Link>
+              </div>
             </div>
           </div>
 
+          <div id="egg-report" ref={reportRef}>
           {/* Key Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <MetricCard
@@ -1075,6 +1178,8 @@ const EggProduction = () => {
               ADD NEW RECORD
             </Button>
             
+            {/* Removed Generate Report link */}
+            
             {/* Batch Filter Dropdown */}
             <div className="flex items-center gap-2">
               <label htmlFor="batchFilter" className="text-sm font-medium text-gray-700">
@@ -1214,6 +1319,8 @@ const EggProduction = () => {
             </div>
           )}
 
+          </div>
+
       {/* Modal for Create/Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -1257,14 +1364,17 @@ const EggProduction = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Batch Number</label>
                   {editingRecord ? (
-                    <input
-                      type="text"
-                      name="batchNumber"
-                      value={formData.batchNumber}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                      required
-                    />
+                    <div className="mt-1 block w-full px-3 py-2 border border-gray-200 rounded-md shadow-sm bg-gray-50 text-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{formData.batchNumber}</span>
+                        <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                          Cannot be changed
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Batch numbers cannot be modified after record creation to maintain data integrity
+                      </p>
+                    </div>
                   ) : (
                     <div className="mt-1 block w-full px-3 py-2 border border-gray-200 rounded-md shadow-sm bg-gray-50 text-gray-700">
                       <div className="flex items-center justify-between">

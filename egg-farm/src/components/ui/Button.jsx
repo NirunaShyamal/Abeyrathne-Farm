@@ -1,45 +1,41 @@
 import React from 'react';
-import { components } from '../../styles/designSystem';
 
 const Button = ({ 
   children, 
-  variant = 'primary',
-  size = 'md',
-  icon = null,
-  iconPosition = 'left',
+  variant = 'primary', 
+  size = 'md', 
+  disabled = false, 
   loading = false,
-  disabled = false,
+  icon,
+  as: Component = 'button',
   className = '',
-  onClick,
-  type = 'button',
   ...props 
 }) => {
-  const baseClasses = components.button.base;
-  const variantClasses = components.button[variant] || components.button.primary;
-  const sizeClasses = components.button.size[size] || components.button.size.md;
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
-  const isDisabled = disabled || loading;
-  
-  const buttonClasses = `
-    ${baseClasses}
-    ${variantClasses}
-    ${sizeClasses}
-    ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-    ${className}
-  `.trim().replace(/\s+/g, ' ');
-
-  const handleClick = (e) => {
-    if (!isDisabled && onClick) {
-      onClick(e);
-    }
+  const variants = {
+    primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500 shadow-sm hover:shadow-md',
+    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-500',
+    success: 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500 shadow-sm hover:shadow-md',
+    danger: 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500 shadow-sm hover:shadow-md',
+    outline: 'border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white focus:ring-orange-500',
+    ghost: 'text-orange-500 hover:bg-orange-50 focus:ring-orange-500',
+    link: 'text-orange-500 hover:text-orange-600 underline-offset-4 hover:underline focus:ring-orange-500'
   };
-
+  
+  const sizes = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base',
+    xl: 'px-8 py-4 text-lg'
+  };
+  
+  const classes = `${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`;
+  
   return (
-    <button
-      type={type}
-      className={buttonClasses}
-      onClick={handleClick}
-      disabled={isDisabled}
+    <Component 
+      className={classes}
+      disabled={disabled || loading}
       {...props}
     >
       {loading && (
@@ -48,84 +44,14 @@ const Button = ({
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
       )}
-      
-      {!loading && icon && iconPosition === 'left' && (
+      {icon && !loading && (
         <span className="mr-2">{icon}</span>
       )}
-      
       {children}
-      
-      {!loading && icon && iconPosition === 'right' && (
-        <span className="ml-2">{icon}</span>
-      )}
-    </button>
+    </Component>
   );
 };
 
-// Icon Button Component
-export const IconButton = ({ 
-  icon, 
-  variant = 'ghost',
-  size = 'md',
-  className = '',
-  ...props 
-}) => {
-  const sizeClasses = {
-    sm: 'p-1.5',
-    md: 'p-2',
-    lg: 'p-3',
-    xl: 'p-4',
-  };
-
-  return (
-    <Button
-      variant={variant}
-      className={`${sizeClasses[size]} ${className}`}
-      {...props}
-    >
-      {icon}
-    </Button>
-  );
-};
-
-// Button Group Component
-export const ButtonGroup = ({ 
-  children, 
-  orientation = 'horizontal',
-  className = '',
-  ...props 
-}) => {
-  const orientationClasses = orientation === 'vertical' ? 'flex-col space-y-2' : 'flex-row space-x-2';
-  
-  return (
-    <div className={`flex ${orientationClasses} ${className}`} {...props}>
-      {children}
-    </div>
-  );
-};
-
-// Floating Action Button
-export const FloatingActionButton = ({ 
-  icon, 
-  onClick,
-  className = '',
-  ...props 
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`
-        fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-orange-500 to-orange-600 
-        hover:from-orange-600 hover:to-orange-700 text-white rounded-full shadow-lg 
-        hover:shadow-xl transition-all duration-300 flex items-center justify-center
-        hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
-        ${className}
-      `.trim().replace(/\s+/g, ' ')}
-      {...props}
-    >
-      {icon}
-    </button>
-  );
-};
-
+export { Button };
 export default Button;
+

@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../assets/farm-logo.svg';
+import logo from '../assets/LogoN.png';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,8 +72,19 @@ const Navigation = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center group">
-                <div className="w-16 h-10 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                  <img src={logo} alt="Abeyrathne Enterprises Logo" className="w-14 h-8" />
+                <div className="w-16 h-10 bg-white border-2 border-orange-500 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden">
+                  <img
+                    src={logo}
+                    alt="Abeyrathne Enterprises Logo"
+                    className="w-full h-full object-contain object-center"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      filter: 'brightness(1.1) contrast(1.1)'
+                    }}
+                  />
                 </div>
                 <div className="ml-3 hidden sm:block">
                   <h1 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
@@ -97,8 +108,8 @@ const Navigation = () => {
                   onFocus={handleSearchFocus}
                   onBlur={handleSearchBlur}
                   className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm transition-all duration-200 bg-gray-50 focus:bg-white ${
-                    isSearchFocused 
-                      ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-20' 
+                    isSearchFocused
+                      ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-20'
                       : 'border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent'
                   }`}
                 />
@@ -117,7 +128,7 @@ const Navigation = () => {
                     </svg>
                   </button>
                 )}
-                
+
                 {/* Search Suggestions Dropdown */}
                 {showSuggestions && searchSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
@@ -146,22 +157,22 @@ const Navigation = () => {
           <div className="flex items-center space-x-3">
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex space-x-1">
-              <Link 
-                to="/about" 
+              <Link
+                to="/about"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  location.pathname === '/about' 
-                    ? 'bg-orange-100 text-orange-700' 
+                  location.pathname === '/about'
+                    ? 'bg-orange-100 text-orange-700'
                     : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
                 }`}
               >
                 About
               </Link>
               {isAuthenticated && user?.role === 'admin' && (
-                <Link 
-                  to="/user-management" 
+                <Link
+                  to="/admin/dashboard-management"
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    location.pathname === '/user-management' 
-                      ? 'bg-orange-100 text-orange-700' 
+                    location.pathname === '/admin/dashboard-management'
+                      ? 'bg-orange-100 text-orange-700'
                       : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
                   }`}
                 >
@@ -169,21 +180,32 @@ const Navigation = () => {
                 </Link>
               )}
             </nav>
-            
+
             {/* User Section */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
                 {/* User Info - Hidden on small screens */}
                 <div className="hidden sm:flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                    <img src={logo} alt="Farm Logo" className="w-6 h-4" />
+                  <div className="w-8 h-8 bg-white border border-orange-500 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img
+                      src={logo}
+                      alt="Farm Logo"
+                      className="w-full h-full object-contain object-center"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        filter: 'brightness(1.1) contrast(1.1)'
+                      }}
+                    />
                   </div>
                   <div className="text-sm">
                     <div className="font-medium text-gray-900">{user?.fullName || 'User'}</div>
                     <div className="text-gray-500 capitalize">{user?.role}</div>
                   </div>
                 </div>
-                
+
                 {/* Logout Button */}
                 <button
                   onClick={logout}
@@ -312,18 +334,18 @@ const Navigation = () => {
               </Link>
               {isAuthenticated && user?.role === 'admin' && (
                 <Link 
-                  to="/user-management" 
+                  to="/admin/dashboard-management" 
                   className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    location.pathname === '/user-management' 
+                    location.pathname === '/admin/dashboard-management' 
                       ? 'bg-orange-100 text-orange-700' 
                       : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  User Management
+                  Admin Dashboard
                 </Link>
               )}
             </div>
@@ -352,8 +374,19 @@ const Navigation = () => {
             {isAuthenticated && (
               <div className="p-4 border-t border-gray-100">
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-xl flex items-center justify-center">
-                    <img src={logo} alt="Farm Logo" className="w-8 h-5" />
+                  <div className="w-12 h-12 bg-white border border-orange-500 rounded-xl flex items-center justify-center overflow-hidden">
+                    <img
+                      src={logo}
+                      alt="Farm Logo"
+                      className="w-full h-full object-contain object-center"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        filter: 'brightness(1.1) contrast(1.1)'
+                      }}
+                    />
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">{user?.fullName || 'User'}</div>

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../assets/farm-logo.svg';
+import logo from '../assets/LogoN.png';
 
 const SignIn = () => {
   const [formData, setFormData] = useState({
@@ -91,8 +91,19 @@ const SignIn = () => {
         {/* Logo and Company Name */}
         <div className="flex justify-center items-center mb-8">
           <div className="flex-shrink-0">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-              <img src={logo} alt="Abeyrathne Enterprises Logo" className="w-12 h-12" />
+            <div className="w-20 h-20 bg-white border-2 border-emerald-500 rounded-full flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300 overflow-hidden">
+              <img
+                src={logo}
+                alt="Abeyrathne Enterprises Logo"
+                className="w-full h-full object-contain object-center"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  width: 'auto',
+                  height: 'auto',
+                  filter: 'brightness(1.1) contrast(1.1)'
+                }}
+              />
             </div>
           </div>
           <div className="ml-4">

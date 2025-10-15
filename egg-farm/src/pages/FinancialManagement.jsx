@@ -553,13 +553,17 @@ const FinancialManagement = () => {
         return recordDate.getFullYear() === currentYear;
       });
     }
+    // Fallback: if no records for selected period, include all to avoid empty PDF
+    if (!filteredRecords || filteredRecords.length === 0) {
+      filteredRecords = financialRecords;
+    }
     
     const report = {
       period: reportPeriod,
       generatedDate: currentDate.toISOString().split('T')[0],
       totalRecords: filteredRecords.length,
-      totalIncome: filteredRecords.filter(record => record.category === 'Income').reduce((sum, record) => sum + record.amount, 0),
-      totalExpenses: filteredRecords.filter(record => record.category === 'Expense').reduce((sum, record) => sum + record.amount, 0),
+      totalIncome: filteredRecords.filter(record => record.category === 'Income').reduce((sum, record) => sum + (Number(record.amount) || 0), 0),
+      totalExpenses: filteredRecords.filter(record => record.category === 'Expense').reduce((sum, record) => sum + (Number(record.amount) || 0), 0),
       netProfit: 0,
       incomeBreakdown: {},
       expenseBreakdown: {},
@@ -571,16 +575,17 @@ const FinancialManagement = () => {
     
     // Calculate breakdowns
     filteredRecords.forEach(record => {
+      const amt = Number(record.amount) || 0;
       if (record.category === 'Income') {
         report.incomeBreakdown[record.subcategory || 'Other Income'] = 
-          (report.incomeBreakdown[record.subcategory || 'Other Income'] || 0) + record.amount;
+          (report.incomeBreakdown[record.subcategory || 'Other Income'] || 0) + amt;
       } else if (record.category === 'Expense') {
         report.expenseBreakdown[record.subcategory || 'Other Expenses'] = 
-          (report.expenseBreakdown[record.subcategory || 'Other Expenses'] || 0) + record.amount;
+          (report.expenseBreakdown[record.subcategory || 'Other Expenses'] || 0) + amt;
       }
       
       report.paymentMethodBreakdown[record.paymentMethod] = 
-        (report.paymentMethodBreakdown[record.paymentMethod] || 0) + record.amount;
+        (report.paymentMethodBreakdown[record.paymentMethod] || 0) + amt;
     });
     
     // Directly generate and download PDF
@@ -588,53 +593,127 @@ const FinancialManagement = () => {
   };
 
 
-  const exportToPDF = (reportData) => {
-    // Generate a simple text-based PDF content
-    const currentDate = new Date().toLocaleDateString();
-    const fileName = `Financial_Report_${reportData.period}_${currentDate.replace(/\//g, '-')}.txt`;
-    
-    // Create PDF content as text (can be converted to PDF by user's system)
-    let pdfContent = `FINANCIAL REPORT\n`;
-    pdfContent += `Generated on: ${reportData.generatedDate}\n`;
-    pdfContent += `Period: ${reportData.period}\n`;
-    pdfContent += `${'='.repeat(50)}\n\n`;
-    
-    pdfContent += `SUMMARY\n`;
-    pdfContent += `Total Income: Rs. ${reportData.totalIncome.toLocaleString()}\n`;
-    pdfContent += `Total Expenses: Rs. ${reportData.totalExpenses.toLocaleString()}\n`;
-    pdfContent += `Net Profit: Rs. ${reportData.netProfit.toLocaleString()}\n\n`;
-    
-    pdfContent += `INCOME BREAKDOWN\n`;
-    pdfContent += `${'-'.repeat(30)}\n`;
-    Object.entries(reportData.incomeBreakdown).forEach(([category, amount]) => {
-      pdfContent += `${category}: Rs. ${amount.toLocaleString()}\n`;
-    });
-    
-    pdfContent += `\nEXPENSE BREAKDOWN\n`;
-    pdfContent += `${'-'.repeat(30)}\n`;
-    Object.entries(reportData.expenseBreakdown).forEach(([category, amount]) => {
-      pdfContent += `${category}: Rs. ${amount.toLocaleString()}\n`;
-    });
-    
-    pdfContent += `\nALL RECORDS\n`;
-    pdfContent += `${'-'.repeat(80)}\n`;
-    pdfContent += `Date\t\tDescription\t\tCategory\t\tAmount\t\tPayment Method\n`;
-    pdfContent += `${'-'.repeat(80)}\n`;
-    
-    reportData.records.forEach(record => {
-      pdfContent += `${record.date}\t${record.description}\t${record.category}\tRs. ${record.amount.toLocaleString()}\t${record.paymentMethod}\n`;
-    });
-    
-    // Create and download the file
-    const blob = new Blob([pdfContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  // Load external script helper (for jsPDF)
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      if (existing.readyState === 'complete') resolve();
+      return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.body.appendChild(script);
+  });
+
+  const exportToPDF = async (reportData) => {
+    try {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        await loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      }
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const left = 40;
+      const lineHeight = 18;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let y = 60;
+
+      // Header
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.text('Financial Summary Report', left, y);
+      y += lineHeight;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, left, y);
+      y += lineHeight * 1.5;
+
+      // Summary
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.text('Summary', left, y);
+      y += lineHeight;
+      pdf.setFont('helvetica', 'normal');
+      const summaryLines = [
+        `Period: ${reportData.period}`,
+        `Total Income: Rs. ${reportData.totalIncome.toLocaleString()}`,
+        `Total Expenses: Rs. ${reportData.totalExpenses.toLocaleString()}`,
+        `Net Profit: Rs. ${reportData.netProfit.toLocaleString()}`
+      ];
+      summaryLines.forEach(t => { pdf.text(t, left, y); y += lineHeight; });
+
+      // Breakdowns side by side when space allows
+      y += lineHeight * 0.5;
+      pdf.setFont('helvetica', 'bold'); pdf.text('Income Breakdown', left, y);
+      pdf.setFont('helvetica', 'bold'); pdf.text('Expense Breakdown', left + 260, y);
+      y += lineHeight;
+      pdf.setFont('helvetica', 'normal');
+      const incomeEntries = Object.entries(reportData.incomeBreakdown);
+      const expenseEntries = Object.entries(reportData.expenseBreakdown);
+      const maxRows = Math.max(incomeEntries.length, expenseEntries.length);
+      for (let i = 0; i < maxRows; i++) {
+        if (y > pageHeight - 120) { pdf.addPage(); y = 60; }
+        const inc = incomeEntries[i];
+        const exp = expenseEntries[i];
+        if (inc) pdf.text(`${inc[0]}: Rs. ${inc[1].toLocaleString()}`, left, y);
+        if (exp) pdf.text(`${exp[0]}: Rs. ${exp[1].toLocaleString()}`, left + 260, y);
+        y += lineHeight;
+      }
+
+      // Detailed records table
+      if (reportData.records && reportData.records.length > 0) {
+        if (y > pageHeight - 100) { pdf.addPage(); y = 60; }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Detailed Records (preview)', left, y);
+        y += lineHeight;
+        pdf.setFont('helvetica', 'normal');
+        const headers = ['Date', 'Description', 'Category', 'Amount', 'Method'];
+        const spacing = 8;
+        const usableWidth = (pageWidth - left * 2) - ((headers.length - 1) * spacing);
+        const colWidth = usableWidth / headers.length;
+        const colX = (i) => left + i * (colWidth + spacing);
+        const tableFont = 10;
+        pdf.setFontSize(tableFont);
+        pdf.setFillColor(240,240,240);
+        pdf.rect(left, y - tableFont, (colWidth + spacing) * headers.length - spacing, tableFont + 8, 'F');
+        headers.forEach((h,i)=> pdf.text(h, colX(i) + 2, y));
+        y += lineHeight * 0.7; pdf.setDrawColor(210); pdf.line(left, y, pageWidth - left, y); y += lineHeight * 0.3;
+
+        reportData.records.slice(0, 20).forEach(r => {
+          if (y > pageHeight - 60) {
+            pdf.addPage(); y = 60;
+            pdf.setFont('helvetica', 'bold'); pdf.text('Detailed Records (preview)', left, y);
+            y += lineHeight; pdf.setFont('helvetica', 'normal'); pdf.setFontSize(tableFont);
+            pdf.setFillColor(240,240,240);
+            pdf.rect(left, y - tableFont, (colWidth + spacing) * headers.length - spacing, tableFont + 8, 'F');
+            headers.forEach((h,i)=> pdf.text(h, colX(i) + 2, y));
+            y += lineHeight * 0.7; pdf.setDrawColor(210); pdf.line(left, y, pageWidth - left, y); y += lineHeight * 0.3;
+          }
+          const rowVals = [
+            r.date || '-',
+            r.description || '-',
+            r.category || '-',
+            `Rs. ${(r.amount||0).toLocaleString()}`,
+            r.paymentMethod || '-'
+          ];
+          rowVals.forEach((v,i)=> {
+            const txt = pdf.splitTextToSize(String(v), colWidth - 6);
+            pdf.text(txt[0], colX(i) + 2, y);
+          });
+          y += lineHeight; pdf.setDrawColor(235); pdf.line(left, y - 10, pageWidth - left, y - 10);
+        });
+      }
+
+      const fileName = `financial-summary-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('Failed to generate PDF.');
+    }
   };
 
 

@@ -316,3 +316,42 @@ textarea:focus {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Logo styling utilities */
+.logo-container {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: optimizeQuality;
+}
+
+.logo-img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: optimizeQuality;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Ensure PNG logos render sharply */
+img[src$=".png"] {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: optimizeQuality;
+}
+
+/* Logo container improvements */
+.logo-container {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+/* Enhanced logo styling for better visibility */
+.logo-enhanced {
+  filter: brightness(1.1) contrast(1.1) saturate(1.05);
+  transition: all 0.3s ease;
+}
+
+.logo-enhanced:hover {
+  filter: brightness(1.15) contrast(1.15) saturate(1.1);
+  transform: scale(1.02);
+}

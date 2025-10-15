@@ -54,4 +54,7 @@ eggProductionSchema.pre('save', function(next) {
   next();
 });
 
+// Add compound index to ensure unique batch numbers per date
+eggProductionSchema.index({ batchNumber: 1, date: 1 }, { unique: true });
+
 module.exports = mongoose.model('EggProduction', eggProductionSchema);

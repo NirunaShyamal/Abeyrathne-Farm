@@ -16,6 +16,7 @@ const taskSchedulingRoutes = require('./src/routes/taskScheduling');
 const financialRecordRoutes = require('./src/routes/financialRecord');
 const contactRoutes = require('./src/routes/contact');
 const notificationRoutes = require('./src/routes/notifications');
+const farmMetricsRoutes = require('./src/routes/farmMetrics');
 
 const app = express();
 
@@ -110,6 +111,7 @@ app.use('/api/task-scheduling', taskSchedulingRoutes);
 app.use('/api/financial-records', financialRecordRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/farm-metrics', farmMetricsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

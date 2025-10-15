@@ -2,12 +2,22 @@
 const API_BASE_URL = '/api';
 
 class ApiService {
+  // Get authentication headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
+
   // Generic HTTP methods
   async get(url) {
     try {
       console.log('Making GET request to:', `${API_BASE_URL}${url}`);
       
-      const response = await fetch(`${API_BASE_URL}${url}`);
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        headers: {
+          ...this.getAuthHeaders()
+        }
+      });
       console.log('Response status:', response.status);
       
       const data = await response.json();
@@ -38,6 +48,7 @@ class ApiService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
         },
         body: JSON.stringify(data),
       });
@@ -47,11 +58,7 @@ class ApiService {
       
       const result = await response.json();
       console.log('Response data:', result);
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Request failed');
-      }
-      
+      // Return the result even if not ok so callers can access validation errors
       return result;
     } catch (error) {
       console.error('POST request failed:', error);
@@ -71,16 +78,13 @@ class ApiService {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
         },
         body: JSON.stringify(data),
       });
       
       const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Request failed');
-      }
-      
+      // Return the result even if not ok so callers can access validation errors
       return result;
     } catch (error) {
       console.error('PUT request failed:', error);
@@ -92,14 +96,13 @@ class ApiService {
     try {
       const response = await fetch(`${API_BASE_URL}${url}`, {
         method: 'DELETE',
+        headers: {
+          ...this.getAuthHeaders()
+        }
       });
       
       const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Request failed');
-      }
-      
+      // Return the result even if not ok so callers can handle errors
       return result;
     } catch (error) {
       console.error('DELETE request failed:', error);
@@ -239,6 +242,32 @@ class ApiService {
 
   async getFinancialSummary() {
     return this.get('/financial-records/summary');
+  }
+
+  // User Management API methods
+  async getUsers() {
+    return this.get('/users');
+  }
+
+  async getUser(id) {
+    return this.get(`/users/${id}`);
+  }
+
+  async createUser(data) {
+    console.log('API Service: Creating user with data:', data);
+    return this.post('/users', data);
+  }
+
+  async updateUser(id, data) {
+    return this.put(`/users/${id}`, data);
+  }
+
+  async deleteUser(id) {
+    return this.delete(`/users/${id}`);
+  }
+
+  async getUserStats() {
+    return this.get('/users/stats');
   }
 
   // Health check

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const SalesOrder = () => {
   const [orders, setOrders] = useState([]);
@@ -31,6 +31,57 @@ const SalesOrder = () => {
     lifetimeValue: []
   });
   const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
+  const reportRef = useRef(null);
+
+  // Load external script helper
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      if (existing.readyState === 'complete') resolve();
+      return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.body.appendChild(script);
+  });
+
+  const exportReportPdf = async () => {
+    try {
+      if (!window.html2canvas) {
+        await loadScript('https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js');
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        await loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      }
+      const element = reportRef.current;
+      if (!element) return;
+      const canvas = await window.html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = position - pageHeight;
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      pdf.save('sales-order-report.pdf');
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
 
   // API Base URL
   const API_BASE_URL = 'http://localhost:5000/api';
@@ -515,21 +566,34 @@ const SalesOrder = () => {
               </div>
               
               {/* Back Button */}
-              <Link 
-                to="/" 
-                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Main Menu
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link 
+                  to="/" 
+                  className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Back to Main Menu
+                </Link>
+                <Link 
+                  to="/reports"
+                  state={{ from: 'sales-order', autoExport: true }}
+                  className="inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors duration-200 font-medium"
+                  title="Download report"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6M3 3v18h18" />
+                  </svg>
+                  Download Report
+                </Link>
+              </div>
             </div>
             <p className="text-gray-600">Manage your sales orders, customers, and inventory efficiently</p>
           </div>
 
           {/* Notifications Panel - Centered */}
-          <div className="mb-8">
+          <div id="sales-report" ref={reportRef} className="mb-8">
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
               <h2 className="text-xl font-bold text-orange-500 mb-6">Notifications</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -634,15 +698,26 @@ const SalesOrder = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">Order Management</h2>
-              <button 
-                onClick={handleCreate}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add New Order
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  onClick={handleCreate}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add New Order
+                </button>
+                
+                <Link to="/reports" state={{ from: 'sales-order' }}>
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Generate Report
+                  </button>
+                </Link>
+              </div>
             </div>
 
             {/* Advanced Features Toggle */}

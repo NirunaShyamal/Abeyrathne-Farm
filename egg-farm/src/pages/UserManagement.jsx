@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 
 const UserManagement = () => {
   const { user } = useAuth();
@@ -8,6 +10,7 @@ const UserManagement = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
   const [createdUser, setCreatedUser] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -24,13 +27,7 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
+      const data = await apiService.getUsers();
       if (data.success) {
         setUsers(data.data);
       }
@@ -60,18 +57,21 @@ const UserManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('Form submitted with data:', formData);
+    
+    // Validate required fields
+    if (!formData.fullName || !formData.username || !formData.email || !formData.password) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      console.log('Sending user creation request...');
+      const data = await apiService.createUser(formData);
+      console.log('User creation response:', data);
+      
       if (data.success) {
         setShowAddForm(false);
         setCreatedUser({
@@ -96,26 +96,17 @@ const UserManagement = () => {
       }
     } catch (error) {
       console.error('Error creating user:', error);
-      alert('Error creating user');
+      alert('Error creating user: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const toggleUserStatus = async (userId) => {
     try {
-      const token = localStorage.getItem('token');
       const user = users.find(u => u._id === userId);
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ isActive: !user.isActive })
-      });
-
-      if (response.ok) {
-        fetchUsers();
-      }
+      await apiService.updateUser(userId, { isActive: !user.isActive });
+      fetchUsers();
     } catch (error) {
       console.error('Error updating user status:', error);
     }
@@ -124,17 +115,8 @@ const UserManagement = () => {
   const deleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          fetchUsers();
-        }
+        await apiService.deleteUser(userId);
+        fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
       }
@@ -441,9 +423,10 @@ const UserManagement = () => {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200"
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add User
+                      {isSubmitting ? 'Creating User...' : 'Add User'}
                     </button>
                   </div>
                 </form>
